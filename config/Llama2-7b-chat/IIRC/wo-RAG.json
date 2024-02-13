@@ -8,6 +8,6 @@
     "shuffle": false,
     "generate_max_length": 128,
     "query_formulation": "direct",
-    "output_dir": "../result",
+    "output_dir": "../result/llama2_7b_chat_iirc",
     "use_counter": true
 }
