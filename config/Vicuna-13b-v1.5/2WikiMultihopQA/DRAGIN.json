@@ -1,0 +1,22 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/wcy/LLM/vicuna-13b-v1.5/",
+    "method": "attn_entropy",
+    "dataset": "2wikimultihop",
+    "data_path": "../data/2wikimultihopqa",
+    "generate_max_length": 64,
+    "query_formulation": "real_words",
+    "retrieve_keep_top_k": 25,
+    "output_dir": "../result/2wikimultihop_vicuna/7",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "attention_solver": "max",
+    "hallucination_threshold": 1.2,
+    "fewshot": 6,
+    "sample": 1000,
+    "shuffle": false,
+    "check_real_words": true,
+    "es_index_name": "34051_wiki",
+    "config_path": "../config_vicuna/2wikimultihop/attn_entropy_real_topk.json",
+    "use_counter": true,
+    "try_use_max_weight": false
+}

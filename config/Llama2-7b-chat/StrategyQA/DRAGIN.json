@@ -1,0 +1,22 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-7b-chat",
+    "method": "attn_entropy",
+    "dataset": "strategyqa",
+    "data_path": "../data/strategyqa",
+    "generate_max_length": 100,
+    "query_formulation": "real_words",
+    "retrieve_keep_top_k": 35,
+    "output_dir": "../result/strategyqa_llama2_7b_0124/24",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "attention_solver": "max",
+    "hallucination_threshold": 0.75,
+    "fewshot": 6,
+    "sample": 1000,
+    "shuffle": false,
+    "check_real_words": true,
+    "es_index_name": "34743_wiki",
+    "config_path": "../config_llama2_7b/strategyqa/attn_entropy_real_topk.json",
+    "use_counter": true,
+    "try_use_max_weight": false
+}

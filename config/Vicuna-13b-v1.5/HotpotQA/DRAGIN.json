@@ -1,0 +1,22 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/wcy/LLM/vicuna-13b-v1.5/",
+    "method": "attn_entropy",
+    "dataset": "hotpotqa",
+    "data_path": "../data/hotpotqa",
+    "generate_max_length": 100,
+    "query_formulation": "real_words",
+    "retrieve_keep_top_k": 35,
+    "output_dir": "../result/hotpotqa_vicuna/8",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "attention_solver": "max",
+    "hallucination_threshold": 1.4,
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "check_real_words": true,
+    "es_index_name": "34051_wiki",
+    "config_path": "../config_vicuna/hotpotqa/attn_entropy_real_topk.json",
+    "use_counter": true,
+    "try_use_max_weight": false
+}

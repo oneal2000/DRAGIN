@@ -1,0 +1,14 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-13b-chat",
+    "method": "non-retrieval",
+    "dataset": "hotpotqa",
+    "data_path": "../data/hotpotqa",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/hotpotqa/1",
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "config_path": "../config/hotpotqa/non-retrieval.json",
+    "use_counter": true
+}

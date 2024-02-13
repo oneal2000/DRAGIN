@@ -1,0 +1,17 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-7b-chat",
+    "method": "single-retrieval",
+    "dataset": "2wikimultihop",
+    "data_path": "../data/2wikimultihopqa",
+    "generate_max_length": 64,
+    "query_formulation": "direct",
+    "output_dir": "../result/2wikimultihop_llama2_7b_0122/2",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "fewshot": 6,
+    "sample": 1000,
+    "shuffle": false,
+    "es_index_name": "34051_wiki",
+    "config_path": "../config_llama2_7b/2wikimultihop/single-retrieval.json",
+    "use_counter": true
+}

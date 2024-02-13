@@ -1,0 +1,19 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/wcy/LLM/vicuna-13b-v1.5/",
+    "method": "token",
+    "dataset": "hotpotqa",
+    "data_path": "../data/hotpotqa",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/hotpotqa_vicuna/10",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "hallucination_threshold": 0.1,
+    "sentence_solver": "avg",
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "es_index_name": "34051_wiki",
+    "config_path": "../config_vicuna/hotpotqa/token.json",
+    "use_counter": true
+}

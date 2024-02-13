@@ -1,0 +1,14 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-7b-chat",
+    "method": "non-retrieval",
+    "dataset": "strategyqa",
+    "data_path": "../data/strategyqa",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/strategyqa_llama2_7b_0124/19",
+    "fewshot": 6,
+    "sample": 1000,
+    "shuffle": false,
+    "config_path": "../config_llama2_7b/strategyqa/non-retrieval.json",
+    "use_counter": true
+}

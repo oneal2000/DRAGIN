@@ -1,0 +1,17 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-13b-chat",
+    "method": "fix-sentence-retrieval",
+    "dataset": "2wikimultihop",
+    "data_path": "../data/2wikimultihopqa",
+    "generate_max_length": 64,
+    "query_formulation": "direct",
+    "output_dir": "../result/2wikimultihop_0122/3",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "fewshot": 6,
+    "sample": 1000,
+    "shuffle": false,
+    "es_index_name": "34216_wiki",
+    "config_path": "../config/2wikimultihop/fix-sentence.json",
+    "use_counter": true
+}

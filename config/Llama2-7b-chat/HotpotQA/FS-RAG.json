@@ -1,0 +1,16 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-7b-chat",
+    "method": "fix-sentence-retrieval",
+    "dataset": "hotpotqa",
+    "data_path": "../data/hotpotqa",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/hotpotqa_llama2_7b/1",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "config_path": "../config_llama2_7b/hotpotqa/fix-sentence.json",
+    "use_counter": true
+}

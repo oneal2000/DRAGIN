@@ -1,0 +1,22 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-13b-chat",
+    "method": "attn_entropy",
+    "dataset": "iirc",
+    "data_path": "../data/iirc",
+    "generate_max_length": 128,
+    "query_formulation": "real_words",
+    "retrieve_keep_top_k": 25,
+    "output_dir": "../result/iirc/8",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "attention_solver": "max",
+    "hallucination_threshold": 1.25,
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "check_real_words": true,
+    "es_index_name": "34216_wiki",
+    "config_path": "../config/iirc/attn_entropy_real_topk.json",
+    "use_counter": true,
+    "try_use_max_weight": false
+}

@@ -1,0 +1,17 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/wcy/LLM/vicuna-13b-v1.5/",
+    "method": "single-retrieval",
+    "dataset": "hotpotqa",
+    "data_path": "../data/hotpotqa",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/hotpotqa_vicuna/4",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "es_index_name": "34216_wiki",
+    "config_path": "../config_vicuna/hotpotqa/single-retrieval.json",
+    "use_counter": true
+}

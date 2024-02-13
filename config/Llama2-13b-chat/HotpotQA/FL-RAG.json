@@ -1,0 +1,18 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-13b-chat",
+    "method": "fix-length-retrieval",
+    "dataset": "hotpotqa",
+    "data_path": "../data/hotpotqa",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/hotpotqa/4",
+    "retriever": "BM25",
+    "retrieve_topk": 3,
+    "fix_length": 32,
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "es_index_name": "34051_wiki",
+    "config_path": "../config/hotpotqa/fix-token.json",
+    "use_counter": true
+}

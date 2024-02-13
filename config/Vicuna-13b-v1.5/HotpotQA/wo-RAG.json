@@ -1,0 +1,14 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/wcy/LLM/vicuna-13b-v1.5/",
+    "method": "non-retrieval",
+    "dataset": "hotpotqa",
+    "data_path": "../data/hotpotqa",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/hotpotqa_vicuna/3",
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "config_path": "../config_vicuna/hotpotqa/non-retrieval.json",
+    "use_counter": true
+}

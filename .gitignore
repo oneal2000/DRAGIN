@@ -1,0 +1,4 @@
+data/
+result/
+src/__pycache__/
+src/beir/
