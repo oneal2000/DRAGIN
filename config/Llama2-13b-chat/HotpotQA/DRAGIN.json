@@ -1,0 +1,19 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-13b-chat",
+    "method": "dragin",
+    "dataset": "hotpotqa",
+    "data_path": "../data/hotpotqa",
+    "fewshot": 8,
+    "sample": 1000,
+    "shuffle": false,
+    "generate_max_length": 100,
+    "query_formulation": "real_words",
+    "retrieve_keep_top_k": 35,
+    "output_dir": "../result/llama2_13b_chat_hotpotqa",
+    "retriever": "BM25",
+    "es_index_name": "wiki",
+    "retrieve_topk": 3,
+    "hallucination_threshold": 1.4,
+    "check_real_words": true,
+    "use_counter": true
+}

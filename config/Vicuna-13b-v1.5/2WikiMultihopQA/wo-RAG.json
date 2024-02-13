@@ -1,0 +1,13 @@
+{
+    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-7b-chat",
+    "method": "non-retrieval",
+    "dataset": "2wikimultihop",
+    "data_path": "../data/2wikimultihopqa",
+    "fewshot": 6,
+    "sample": 1000,
+    "shuffle": false,
+    "generate_max_length": 64,
+    "query_formulation": "direct",
+    "output_dir": "../result/vicuna_13b_v1.5_2wikimultihopqa",
+    "use_counter": true
+}
