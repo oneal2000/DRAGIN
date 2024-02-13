@@ -695,10 +695,10 @@ class AttnWeightRAG(BasicRAG):
                 prompt, 
                 self.generate_max_length, 
                 # self.attention_solver, 
-                use_entropy = self.method == "attn_entropy", 
+                use_entropy = self.method == "dragin", 
                 use_logprob = self.method == "attn_prob"
             )
-            weight = entropies if self.method == "attn_entropy" else [-v for v in logprobs]
+            weight = entropies if self.method == "dragin" else [-v for v in logprobs]
 
             if self.use_counter == True:
                 self.counter.add_generate(new_text, self.generator.tokenizer)

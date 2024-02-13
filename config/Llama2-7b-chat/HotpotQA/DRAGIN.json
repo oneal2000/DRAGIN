@@ -1,6 +1,6 @@
 {
     "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-7b-chat",
-    "method": "attn_entropy",
+    "method": "dragin",
     "dataset": "hotpotqa",
     "data_path": "../data/hotpotqa",
     "fewshot": 8,
@@ -9,7 +9,7 @@
     "generate_max_length": 100,
     "query_formulation": "real_words",
     "retrieve_keep_top_k": 35,
-    "output_dir": "../result/hotpotqa_llama2_7b_0124",
+    "output_dir": "../result",
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,

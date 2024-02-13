@@ -8,7 +8,7 @@
     "shuffle": false,
     "generate_max_length": 100,
     "query_formulation": "direct",
-    "output_dir": "../result/strategyqa_vicuna",
+    "output_dir": "../result",
     "es_index_name": "wiki",
     "use_counter": true
 }

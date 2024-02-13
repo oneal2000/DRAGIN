@@ -1,6 +1,6 @@
 {
     "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-7b-chat",
-    "method": "attn_entropy",
+    "method": "dragin",
     "dataset": "2wikimultihop",
     "data_path": "../data/2wikimultihopqa",
     "fewshot": 6,
@@ -9,7 +9,7 @@
     "generate_max_length": 64,
     "query_formulation": "real_words",
     "retrieve_keep_top_k": 40,
-    "output_dir": "../result/2wikimultihop_llama2_7b_0122",
+    "output_dir": "../result",
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,

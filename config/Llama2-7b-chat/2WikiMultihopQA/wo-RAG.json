@@ -8,6 +8,6 @@
     "shuffle": false,
     "generate_max_length": 64,
     "query_formulation": "direct",
-    "output_dir": "../result/2wikimultihop_llama2_7b_0122",
+    "output_dir": "../result",
     "use_counter": true
 }

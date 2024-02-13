@@ -8,7 +8,7 @@
     "shuffle": false,
     "generate_max_length": 128,
     "query_formulation": "direct",
-    "output_dir": "../result/iirc",
+    "output_dir": "../result",
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,

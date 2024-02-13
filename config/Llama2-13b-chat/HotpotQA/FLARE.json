@@ -8,7 +8,7 @@
     "shuffle": false,
     "generate_max_length": 100,
     "query_formulation": "direct",
-    "output_dir": "../result/hotpotqa",
+    "output_dir": "../result",
     "retriever": "BM25",
     "retrieve_topk": 3,
     "hallucination_threshold": 0.1,

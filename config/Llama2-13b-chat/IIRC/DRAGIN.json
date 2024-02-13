@@ -1,6 +1,6 @@
 {
     "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-13b-chat",
-    "method": "attn_entropy",
+    "method": "dragin",
     "dataset": "iirc",
     "data_path": "../data/iirc",
     "fewshot": 8,
@@ -9,7 +9,7 @@
     "generate_max_length": 128,
     "query_formulation": "real_words",
     "retrieve_keep_top_k": 25,
-    "output_dir": "../result/iirc",
+    "output_dir": "../result",
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,

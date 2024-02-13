@@ -8,7 +8,7 @@
     "shuffle": false,
     "generate_max_length": 100,
     "query_formulation": "direct",
-    "output_dir": "../result/strategyqa_llama2_7b_0124",
+    "output_dir": "../result",
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,

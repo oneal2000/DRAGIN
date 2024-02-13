@@ -1,6 +1,6 @@
 {
     "model_name_or_path": "/liuzyai04/thuir/wcy/LLM/vicuna-13b-v1.5/",
-    "method": "attn_entropy",
+    "method": "dragin",
     "dataset": "iirc",
     "data_path": "../data/iirc",
     "fewshot": 8,
@@ -9,7 +9,7 @@
     "generate_max_length": 128,
     "query_formulation": "real_words",
     "retrieve_keep_top_k": 35,
-    "output_dir": "../result/iirc_vicuna",
+    "output_dir": "../result",
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,
