@@ -96,8 +96,6 @@ The parameters that can be selected in the config file `config.json` are as foll
 | `hallucination_threshold` | threshold at which a word is judged to be incorrect.         | 1.2                                                          |
 | `check_real_words`        | Whether only content words participate in threshold judgment.<br />Without this parameter, all words will be considered. | `true`, `false`(without)                                     |
 | `use_counter`             | Whether to use counters to count the number of generation, retrieval, number of problems, number of tokens generated, and number of sentences generated.<br />Without this parameter, the number will not be counted. | `true`, `false`(without)                                     |
-| `attention_solver`        | 一个词语所有 token 的 attention 的保留方式，即选择整个词语涉及的所有 token 的 attention 怎么运算的结果作为词语的 attention【待删除】 | `max`, `avg`, `last_token`                                   |
-| `try_use_max_weight`      | 【待删除】                                                   |                                                              |
 
 If you are using BM25 as the retriever, you should also include the following parameters
 
@@ -117,7 +115,7 @@ Here is the config file for using our approach to generate answers to the top 10
 
 ```json
 {
-    "model_name_or_path": 'meta-llama/Llama-2-13b-chat-hf',
+    "model_name_or_path": "meta-llama/Llama-2-13b-chat-hf",
     "method": "attn_entropy",
     "dataset": "2wikimultihopqa",
     "data_path": "../data/2wikimultihopqa",

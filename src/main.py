@@ -42,8 +42,6 @@ def get_args():
         args.shuffle = False 
     if "use_counter" not in args:
         args.use_counter = True
-    if args.method.startswith("attn") and "try_use_max_weight" not in args:
-        args.try_use_max_weight = False
     return args
 
 

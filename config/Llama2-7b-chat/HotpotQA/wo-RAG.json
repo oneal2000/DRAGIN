@@ -3,12 +3,11 @@
     "method": "non-retrieval",
     "dataset": "hotpotqa",
     "data_path": "../data/hotpotqa",
-    "generate_max_length": 100,
-    "query_formulation": "direct",
-    "output_dir": "../result/hotpotqa_llama2_7b/0",
     "fewshot": 8,
     "sample": 1000,
     "shuffle": false,
-    "config_path": "../config_llama2_7b/hotpotqa/non-retrieval.json",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/hotpotqa_llama2_7b",
     "use_counter": true
 }

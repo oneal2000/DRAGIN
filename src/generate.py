@@ -502,11 +502,6 @@ class AttnWeightRAG(BasicRAG):
             thres = [1 if v > self.hallucination_threshold else 0 for v in value]
             if 1 in thres:
                 # hallucinated
-                
-                if self.try_use_max_weight: # try：尝试将最大的那个 token 踢掉而不是所有的 token
-                    max_value = max(value)
-                    thres = [1 if v == max_value else 0 for v in value]
-                
                 if "check_real_words" in self.__dict__ and self.check_real_words:
                     doc = nlp(sent)
                     real_words = set(token.text for token in doc if token.pos_ in 
@@ -699,7 +694,7 @@ class AttnWeightRAG(BasicRAG):
             new_text, tokens, attns, logprobs, entropies = self.generator.generate_attn(
                 prompt, 
                 self.generate_max_length, 
-                self.attention_solver, 
+                # self.attention_solver, 
                 use_entropy = self.method == "attn_entropy", 
                 use_logprob = self.method == "attn_prob"
             )
@@ -741,31 +736,6 @@ class AttnWeightRAG(BasicRAG):
                     assert "retrieve_keep_top_k" in self.__dict__
                     retrieve_question = fetch_last_n_tokens(
                         forward_all, self.retrieve_keep_top_k)
-
-                elif self.query_formulation == "regenerate":
-                    assert self.try_use_max_weight == True
-                    if curr_hit[0] == 1:
-                        retrieve_question = " ".join(
-                            list(curr_tokens[i] if curr_hit[i] == 0 else "" for i in range(len(curr_tokens)))
-                        )
-                    else:
-                        curr = " ".join(
-                            list(curr_tokens[i] if curr_hit[i] == 0 else "[xxx]" for i in range(len(curr_tokens)))
-                        ) 
-                        query_prompt = "Please ask a question regarding the [xxx] position in this sentence. Please only output the question.\n"
-                        query_prompt += curr + "\n"
-                        query_prompt += "Give the question: "
-                        retrieve_question, _, _ = self.generator.generate(query_prompt, 64)
-                        retrieve_question = retrieve_question.strip()
-                        if self.use_counter == True:
-                            self.counter.add_generate(retrieve_question, self.generator.tokenizer)
-                
-                # elif self.query_formulation == "forward":
-                #     retrieve_question = self.fetch_forward(
-                #         prev_text = question + " " + text + " " + ptext,
-                #         curr_tokens = curr_tokens, 
-                #         curr_hit = curr_hit,
-                #     )
                 
                 elif self.query_formulation == "real_words": 
                     retrieve_question = self.keep_real_words(

@@ -3,12 +3,11 @@
     "method": "non-retrieval",
     "dataset": "strategyqa",
     "data_path": "../data/strategyqa",
-    "generate_max_length": 100,
-    "query_formulation": "direct",
-    "output_dir": "../result/strategyqa/4",
     "fewshot": 6,
     "sample": 1000,
     "shuffle": false,
-    "config_path": "../config/strategyqa/non-retrieval.json",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/strategyqa",
     "use_counter": true
 }

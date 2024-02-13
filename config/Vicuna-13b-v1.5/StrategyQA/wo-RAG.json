@@ -3,13 +3,12 @@
     "method": "non-retrieval",
     "dataset": "strategyqa",
     "data_path": "../data/strategyqa",
-    "generate_max_length": 100,
-    "query_formulation": "direct",
-    "output_dir": "../result/strategyqa_vicuna/0",
     "fewshot": 6,
     "sample": 1000,
     "shuffle": false,
-    "es_index_name": "34216_wiki",
-    "config_path": "../config_vicuna/strategyqa/non-retrieval.json",
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "output_dir": "../result/strategyqa_vicuna",
+    "es_index_name": "wiki",
     "use_counter": true
 }

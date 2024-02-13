@@ -3,12 +3,11 @@
     "method": "non-retrieval",
     "dataset": "2wikimultihop",
     "data_path": "../data/2wikimultihopqa",
-    "query_formulation": "direct",
-    "generate_max_length": 64,
-    "output_dir": "../result/2wikimultihop_llama2_7b_0122/1",
     "fewshot": 6,
     "sample": 1000,
     "shuffle": false,
-    "config_path": "../config_llama2_7b/2wikimultihop/non-retrieval.json",
+    "generate_max_length": 64,
+    "query_formulation": "direct",
+    "output_dir": "../result/2wikimultihop_llama2_7b_0122",
     "use_counter": true
 }
