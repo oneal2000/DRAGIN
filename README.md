@@ -45,11 +45,11 @@ python prep_elastic.py --data_path data/dpr/psgs_w100.tsv --index_name wiki  # b
 
 ### Download Dataset
 
-For 2WikiMultihopQA
+For 2WikiMultihopQA:
 
 Download the [2WikiMultihop](https://www.dropbox.com/s/ms2m13252h6xubs/data_ids_april7.zip?e=1) dataset from its repository <https://www.dropbox.com/s/ms2m13252h6xubs/data_ids_april7.zip?e=1>. Unzip it and move the folder to `data/2wikimultihopqa`.
 
-For StrategyQA 
+For StrategyQA:
 
 ```bash
 wget -O data/strategyqa_dataset.zip https://storage.googleapis.com/ai2i/strategyqa/data/strategyqa_dataset.zip
@@ -58,14 +58,14 @@ unzip data/strategyqa_dataset.zip -d data/strategyqa
 rm data/strategyqa_dataset.zip 
 ```
 
-For HotpotQA
+For HotpotQA:
 
 ```bash
 mkdir -p data/hotpotqa
 wget -O data/hotpotqa/hotpotqa-dev.json http://curtis.ml.cmu.edu/datasets/hotpot/hotpot_dev_distractor_v1.json
 ```
 
-For IIRC
+For IIRC:
 
 ```bash
 wget -O data/iirc.tgz https://iirc-dataset.s3.us-west-2.amazonaws.com/iirc_train_dev.tgz
@@ -103,7 +103,7 @@ If you are using BM25 as the retriever, you should also include the following pa
 | --------------- | ------------------------------------------ | ------- |
 | `es_index_name` | The name of the index in the Elasticsearch | `wiki`  |
 
-If you are using SGPT as the retriever, you should also include the following parameters
+If you are using SGPT as the retriever, you should also include the following parameters.
 
 | Parameter                 | Meaning                               | example                                                   |
 | ------------------------- | ------------------------------------- | --------------------------------------------------------- |
@@ -125,7 +125,6 @@ Here is the config file for using our approach to generate answers to the top 10
     "output_dir": "../result/2wikimultihopqa_llama2_13b",
     "retriever": "BM25",
     "retrieve_topk": 3,
-    "attention_solver": "max",
     "hallucination_threshold": 1.2,
     "fewshot": 6,
     "sample": 1000,
@@ -138,7 +137,7 @@ Here is the config file for using our approach to generate answers to the top 10
 
 The config files of the main experiments in the paper are all in the `config/`.
 
-When you have prepared the configuration file, run the following command in the `src` directory
+When you have prepared the configuration file, run the following command in the `src` directory:
 
 ```bash
 python main.py -c path_to_config_file
@@ -148,13 +147,13 @@ python main.py -c path_to_config_file
 
 Upon completion of the program, you will find a folder named with a numerical identifier within your designated output directory. This identifier corresponds to the sequential order of runs within that folder, allowing for easy organization of multiple executions. Additionally, during the runtime, you will receive prompts indicating the specific folder where the current run's results will be saved.
 
-Assume that the results of your run are saved in the `result/2wikimultihopqa_llama2_13b/1`，run the following command in the `src` directory to evaluate
+Assume that the results of your run are saved in the `result/2wikimultihopqa_llama2_13b/1`，run the following command in the `src` directory to evaluate:
 
 ```bash
 python evaluate.py --dir path_to_folder(result/2wikimultihopqa_llama2_13b/1)
 ```
 
-After the evaluation program has finished running, the results folder will contain the following files
+After the evaluation program has finished running, the results folder will contain the following files:
 
 ```plain
 result/
@@ -166,7 +165,7 @@ result/
         └── result.tsv # Evaluation results
 ```
 
-The elements in `output.txt` are as follows
+The elements in `output.txt` are as follows:
 
 ```json
 {
@@ -180,7 +179,7 @@ The elements in `output.txt` are as follows
 }
 ```
 
-The elements in `details.txt` are as follows
+The elements in `details.txt` are as follows:
 
 ```json
 {
@@ -190,7 +189,3 @@ The elements in `details.txt` are as follows
     "F1": "F1 result"
 }
 ```
-
-## Citation
-
-[TODO]
