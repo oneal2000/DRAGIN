@@ -3,7 +3,7 @@ import json
 import argparse
 from tqdm import tqdm
 from copy import copy
-import logging 
+import logging
 from data import StrategyQA, WikiMultiHopQA, HotpotQA, IIRC
 from generate import *
 
