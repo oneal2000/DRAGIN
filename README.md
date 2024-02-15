@@ -45,11 +45,11 @@ python prep_elastic.py --data_path data/dpr/psgs_w100.tsv --index_name wiki  # b
 
 ### Download Dataset
 
-For 2WikiMultihopQA:
+For 2WikiMultihopQA
 
 Download the [2WikiMultihop](https://www.dropbox.com/s/ms2m13252h6xubs/data_ids_april7.zip?e=1) dataset from its repository <https://www.dropbox.com/s/ms2m13252h6xubs/data_ids_april7.zip?e=1>. Unzip it and move the folder to `data/2wikimultihopqa`.
 
-For StrategyQA: 
+For StrategyQA 
 
 ```bash
 wget -O data/strategyqa_dataset.zip https://storage.googleapis.com/ai2i/strategyqa/data/strategyqa_dataset.zip
@@ -81,7 +81,7 @@ The parameters that can be selected in the config file `config.json` are as foll
 | parameter                 | meaning                                                      | example/options                                              |
 | ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | `model_name_or_path`      | Hugging Face model.                                          | `meta-llama/Llama-2-13b-chat-hf`                             |
-| `method`                  | way to generate answers【等待修改 attn_entropy】             | `non-retrieval`, `single-retrieval`, `token`, `fix-sentence-retrieval`, `fix-length-retrieval`, `attn_entropy` |
+| `method`                  | way to generate answers             | `non-retrieval`, `single-retrieval`, `token`, `fix-sentence-retrieval`, `fix-length-retrieval`, `attn_entropy` |
 | `dataset`                 | Dataset                                                      | `2wikimultihopqa`, `hotpotqa`, `iirc`, `strategyqa`          |
 | `data_path`               | the folder where the data is located. If you use the above code to download the data, the folder will be `../data/dataset`. | `../data/2wikimultihopqa`                                    |
 | `fewshot`                 | Few shot.                                                    | 6                                                            |
