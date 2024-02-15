@@ -132,9 +132,7 @@ Here is the config file for using our approach to generate answers to the top 10
     "shuffle": false,
     "check_real_words": true,
     "es_index_name": "34051_wiki",
-    "config_path": "../config_llama2_7b/2wikihop/attn_entropy_real_topk.json",
-    "use_counter": true,
-    "try_use_max_weight": false
+    "use_counter": true
 }
 ```
 
@@ -158,7 +156,7 @@ python evaluate.py --dir path_to_folder(result/2wikimultihopqa_llama2_13b/1)
 
 After the evaluation program has finished running, the results folder will contain the following files
 
-```
+```plain
 result/
 └── 2wikimultihopqa_llama2_13b/
     └── 1/
