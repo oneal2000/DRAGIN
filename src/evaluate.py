@@ -6,7 +6,7 @@ import torch
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from data import StrategyQA, WikiMultiHopQA, NaturalQuestion, HotpotQA, TriviaQA, IIRC
+from data import StrategyQA, WikiMultiHopQA, HotpotQA, IIRC
 from transformers import AutoTokenizer, AutoModelForCausalLM 
 
 logging.basicConfig(level=logging.INFO) 
@@ -69,10 +69,6 @@ def main():
         data = StrategyQA(args.data_path)
     elif args.dataset == '2wikimultihopqa':
         data = WikiMultiHopQA(args.data_path)
-    elif args.dataset == "nq":
-        data = NaturalQuestion(args.data_path)
-    elif args.dataset == 'triviaqa':
-        data = TriviaQA(args.data_path)
     elif args.dataset == 'hotpotqa':
         data = HotpotQA(args.data_path)
     elif args.dataset == 'iirc':

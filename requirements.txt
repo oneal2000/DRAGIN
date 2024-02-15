@@ -4,6 +4,6 @@ datasets==2.14.1
 tqdm
 scipy
 evaluate==0.2.2
-spacy==3.5.0
+spacy==3.7.2
 accelerate
 elasticsearch==7.17.9

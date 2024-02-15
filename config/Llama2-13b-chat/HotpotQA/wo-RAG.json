@@ -1,5 +1,5 @@
 {
-    "model_name_or_path": "meta-llama/Llama-2-13b-chat",
+    "model_name_or_path": "lmsys/vicuna-13b-v1.5",
     "method": "non-retrieval",
     "dataset": "hotpotqa",
     "data_path": "../data/hotpotqa",
@@ -9,5 +9,6 @@
     "generate_max_length": 100,
     "query_formulation": "direct",
     "output_dir": "../result/llama2_13b_chat_hotpotqa",
+    "es_index_name": "wiki",
     "use_counter": true
 }

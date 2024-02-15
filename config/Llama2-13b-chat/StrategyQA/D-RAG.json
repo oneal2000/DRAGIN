@@ -1,5 +1,5 @@
 {
-    "model_name_or_path": "meta-llama/Llama-2-13b-chat",
+    "model_name_or_path": "lmsys/vicuna-13b-v1.5",
     "method": "single-retrieval",
     "dataset": "strategyqa",
     "data_path": "../data/strategyqa",
@@ -10,6 +10,7 @@
     "query_formulation": "direct",
     "output_dir": "../result/llama2_13b_chat_strategyqa",
     "retriever": "BM25",
+    "es_index_name": "wiki",
     "retrieve_topk": 3,
     "use_counter": true
 }
