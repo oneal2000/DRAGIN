@@ -1,5 +1,5 @@
 {
-    "model_name_or_path": "/liuzyai04/thuir/wcy/LLM/vicuna-13b-v1.5/",
+    "model_name_or_path": "lmsys/vicuna-13b-v1.5",
     "method": "token",
     "dataset": "strategyqa",
     "data_path": "../data/strategyqa",

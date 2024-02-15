@@ -1,5 +1,5 @@
 {
-    "model_name_or_path": "/liuzyai04/thuir/tyc/base_model/llama2-13b-chat",
+    "model_name_or_path": "meta-llama/Llama-2-13b-chat",
     "method": "token",
     "dataset": "strategyqa",
     "data_path": "../data/strategyqa",
