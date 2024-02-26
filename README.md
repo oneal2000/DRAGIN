@@ -4,7 +4,13 @@ DRAGIN: Dynamic Retrieval Augmented Generation based on the Real-time Informatio
 
 ## Overview
 
-[TODO]
+Dynamic retrieval augmented generation (RAG) paradigm actively decides when and what to retrieve during the text generation process of Large Language Models (LLMs).
+There are two key elements of this paradigm: identifying the optimal moment to activate the retrieval module (deciding when to retrieve) and crafting the appropriate query once retrieval is triggered (determining what to retrieve).
+However, current dynamic RAG methods fall short in both aspects. 
+Firstly, the strategies for deciding when to retrieve often rely on static rules. 
+Moreover, the strategies for deciding what to retrieve typically limit themselves to the LLM's most recent sentence or the last few tokens, while the LLM's real-time information needs may span across the entire context. To overcome these limitations, we introduce a new framework, DRAGIN, i.e., Dynamic Retrieval Augmented Generation based on the real-time Information Needs of LLMs. Our framework is specifically designed to make decisions on when and what to retrieve, based on the LLM's real-time information needs during the text generation process.
+For the timing of retrieval, we propose RIND: Real-time Information Needs Detection, which considers the LLM's uncertainty about its own generated content, the importance of each token, and the semantic significance of each token. For the formulation of retrieval queries, we propose QFS: Query F}ormulation based on Self-attention, which innovates query formulation by leveraging the LLM's self-attention across the entire context.
+DRAGIN is a lightweight RAG framework that can be incorporated into any Transformer-based LLMs without further training, fine-tuning, or prompt engineering.
 
 ## Install environment
 
