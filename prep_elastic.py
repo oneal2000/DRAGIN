@@ -6,7 +6,7 @@ import csv
 import json
 import logging
 from tqdm import tqdm
-from src.beir.datasets.data_loader import GenericDataLoader
+from beir.datasets.data_loader import GenericDataLoader
 
 def build_elasticsearch(
     beir_corpus_file_pattern: str,
