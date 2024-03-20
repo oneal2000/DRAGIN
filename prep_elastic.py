@@ -14,7 +14,7 @@ def build_elasticsearch(
 ):
     beir_corpus_files = glob.glob(beir_corpus_file_pattern)
     print(f'#files {len(beir_corpus_files)}')
-    from src.beir.retrieval.search.lexical.elastic_search import ElasticSearch
+    from beir.retrieval.search.lexical.elastic_search import ElasticSearch
     config = {
         'hostname': 'localhost',
         'index_name': index_name,
