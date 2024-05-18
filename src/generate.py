@@ -522,90 +522,6 @@ class AttnWeightRAG(BasicRAG):
                 return True, prev, tokens[tl:tr], thres
         return False, text, None, None
 
-    # def fetch_forward(self, prev_text, curr_tokens, curr_hit):
-    #     curr_text = " ".join(curr_tokens)
-
-    #     all_text = prev_text + " " + curr_text
-    #     input_ids = self.generator.tokenizer.encode(all_text, return_tensors="pt")
-    #     input_length = input_ids.shape[1]
-    #     tokens_tmp = self.generator.tokenizer.convert_ids_to_tokens(input_ids[0])
-
-    #     atten_tmp = self.generator.model(input_ids, output_attentions=True).attentions[-1][0]
-
-    #     # merge tokens
-    #     range_ = []
-    #     for i, t in enumerate(tokens_tmp):
-    #         if i == 0 or t.startswith(self.generator.space_token) or input_ids[0][i] == 13:
-    #             range_.append([i, i])
-    #         else:
-    #             range_[-1][-1] += 1
-    #     tokens = []
-    #     for r in range_:
-    #         tokenseq = "".join(tokens_tmp[r[0]: r[1]+1]).replace(self.generator.space_token, "")
-    #         tokens.append(tokenseq)
-
-    #     curr_st = len(tokens) - len(curr_tokens)
-    #     curr_ed = len(tokens)
-    #     tl, tr = 0, len(tokens)
-    #     if "retrieve_query_type" in self.__dict__:
-    #         if self.retrieve_query_type == "only_forward":
-    #             tr = curr_st
-    #         elif self.retrieve_query_type == "current":
-    #             tl, tr = curr_st, curr_ed
-    #         elif self.retrieve_query_type == "top_k_and_current":
-    #             tr = curr_st
-
-    #     attns = []
-    #     for r in range_:
-    #         att = torch.zeros(atten_tmp.shape[0], input_length)
-    #         for i in range(r[0], r[1] + 1):
-    #             att += atten_tmp[:, i]
-    #         att /= (r[1] - r[0] + 1)
-    #         att = torch.mean(att, dim=0)
-    #         att = att[tl:tr]
-    #         if att.shape[0] > 1:
-    #             att = att / sum(att[1:]).item()
-    #         attns.append(att)
-            
-    #     # 计算每个超过阈值的 token 在前文的 attentions
-    #     forward_attns = torch.zeros(tr - tl)
-    #     hit_cnt = 0
-    #     for i in range(len(curr_hit)):
-    #         if curr_hit[i] == 1:
-    #             forward_attns += attns[curr_st + i]
-    #             hit_cnt += 1
-    #     forward_attns /= hit_cnt
-    #     forward_attns = forward_attns.tolist()
-
-    #     if "retrieve_keep_weight" in self.__dict__:
-    #         topk_token = []
-    #         for tok, att in zip(tokens[tl:tr], forward_attns):
-    #             if att * (tr - tl + 1) >= self.retrieve_keep_weight:
-    #                 topk_token.append(tok)
-
-    #     else:
-    #         topk_attn = sorted(forward_attns, reverse=True)
-    #         if "retrieve_keep_top_k" in self.__dict__:
-    #             top_k = min(self.retrieve_keep_top_k, tr - tl)
-    #         elif "retrieve_keep_ratio" in self.__dict__:
-    #             top_k = int((tr - tl) * self.retrieve_keep_ratio)
-    #         else:
-    #             raise NotImplementedError
-    #         topk_attn = topk_attn[:top_k]
-    #         topk_token = []
-    #         for tok, att in zip(tokens[tl:tr], forward_attns):
-    #             if att in topk_attn:
-    #                 topk_token.append(tok)
-        
-    #     final_text = " ".join(topk_token)
-    #     if "retrieve_query_type" in self.__dict__ and self.retrieve_query_type == "top_k_and_current":
-    #         mask_curr = " ".join(
-    #             list(curr_tokens[i] if curr_hit[i] == 0 else "" for i in range(len(curr_tokens)))
-    #         )
-    #         return final_text + " " + mask_curr
-    #     else:
-    #         return final_text
-
     def keep_real_words(self, prev_text, curr_tokens, curr_hit):
         curr_text = " ".join(curr_tokens)
         all_text = prev_text + " " + curr_text
@@ -628,22 +544,26 @@ class AttnWeightRAG(BasicRAG):
             tokens.append(tokenseq)
 
         # 获取幻觉词对应的 attention
-        tl, tr = 0, len(tokens)
         curr_st = len(tokens) - len(curr_tokens)
-        attns = []
+        atten_tmp = torch.mean(atten_tmp, dim=0)
         for r in range_:
-            att = torch.zeros(atten_tmp.shape[0], input_length)
+            # att = torch.zeros(atten_tmp.shape[0], input_length)
+            att = torch.zeros(input_length)
             for i in range(r[0], r[1] + 1):
-                att += atten_tmp[:, i]
+                if i == 0:
+                    continue
+                v = atten_tmp[i-1][:r[0]] # 上一位的
+                v = v / v.sum()
+                t = torch.zeros(input_length)
+                t[:r[0]] = v
+                att += t
             att /= (r[1] - r[0] + 1)
-            att = torch.mean(att, dim=0)
-            att = att[tl:tr]
-            if att.shape[0] > 1:
-                att = att / sum(att[1:]).item()
+            # merge token for att
+            att = torch.tensor([att[rr[0]:rr[1]+1].sum() for rr in range_])
             attns.append(att)
             
         # 计算每个超过阈值的 token 在前文的 attentions
-        forward_attns = torch.zeros(tr - tl)
+        forward_attns = torch.zeros(len(tokens))
         hit_cnt = 0
         for i in range(len(curr_hit)):
             if curr_hit[i] == 1:
@@ -666,6 +586,8 @@ class AttnWeightRAG(BasicRAG):
         real_pairs = []
         for i in range(len(tokens)):
             tok, att = tokens[i], forward_attns[i]
+            if i >= curr_st and curr_hit[i - curr_st]:
+                continue
             if match(tok):
                 real_pairs.append((att, tok, i))
         
@@ -674,11 +596,11 @@ class AttnWeightRAG(BasicRAG):
         elif "retrieve_keep_ratio" in self.__dict__:
             top_k = int(len(real_pairs) * self.retrieve_keep_ratio)
         
-        real_pairs = sorted(real_pairs, key = lambda x:x[0])
+        real_pairs = sorted(real_pairs, key = lambda x:x[0], reverse=True)
         real_pairs = real_pairs[:top_k]
         real_pairs = sorted(real_pairs, key = lambda x:x[2])
         return " ".join([x[1] for x in real_pairs])
-
+        
     def inference(self, question, demo, case):
         # assert self.query_formulation == "direct"
         # print(question)
