@@ -546,6 +546,7 @@ class AttnWeightRAG(BasicRAG):
         # 获取幻觉词对应的 attention
         curr_st = len(tokens) - len(curr_tokens)
         atten_tmp = torch.mean(atten_tmp, dim=0)
+        attns = []
         for r in range_:
             # att = torch.zeros(atten_tmp.shape[0], input_length)
             att = torch.zeros(input_length)
