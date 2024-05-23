@@ -13,7 +13,7 @@
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,
-    "hallucination_threshold": 1.4,
+    "hallucination_threshold": 1.2,
     "check_real_words": true,
     "use_counter": true
 }
