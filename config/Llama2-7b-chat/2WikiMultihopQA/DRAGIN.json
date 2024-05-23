@@ -8,12 +8,12 @@
     "shuffle": false,
     "generate_max_length": 64,
     "query_formulation": "real_words",
-    "retrieve_keep_top_k": 40,
+    "retrieve_keep_top_k": 25,
     "output_dir": "../result/llama2_7b_chat_2wikimultihopqa",
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,
-    "hallucination_threshold": 1.2,
+    "hallucination_threshold": 1.0,
     "check_real_words": true,
     "use_counter": true
 }
