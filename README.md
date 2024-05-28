@@ -1,6 +1,12 @@
 # DRAGIN
 
-Welcome to the official GitHub repository for DRAGIN (Dynamic Retrieval Augmented Generation based on the real-time Information Needs of LLMs), a dynamic RAG framework designed to enhance the text generation capabilities of Large Language Models (LLMs) by intelligently deciding when and what to retrieve during the generation process.
+**📢 News: this work has been accepted at the ACL 2024 main conference!**
+
+**If you find our project interesting or helpful, we would appreciate it if you could give us a star! Your support is a tremendous encouragement to us!**
+
+
+
+**Welcome to the official GitHub repository for our ACL 2024 Main Conference Full paper: DRAGIN** (Dynamic Retrieval Augmented Generation based on the real-time Information Needs of LLMs), a dynamic RAG framework designed to enhance the text generation capabilities of Large Language Models (LLMs) by intelligently deciding when and what to retrieve during the generation process.
 
 ## Overview
 
