@@ -13,5 +13,6 @@
     "es_index_name": "wiki",
     "retrieve_topk": 3,
     "hallucination_threshold": 0.4,
-    "use_counter": true
+    "use_counter": true,
+    "sentence_solver": "avg"
 }
