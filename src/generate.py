@@ -267,10 +267,10 @@ class FixLengthRAG(BasicRAG):
     def inference(self, question, demo, case):
         assert self.query_formulation == "direct"
         text = ""
+        retrieve_question = question
         while True:
             old_len = len(text)
-            docs = self.retrieve(question, topk=self.retrieve_topk)
-            # 对 topk 个 passage 生成 prompt
+            docs = self.retrieve(retrieve_question, topk=self.retrieve_topk
             prompt = "".join([d["case"]+"\n" for d in demo])
             prompt += "Context:\n"
             for i, doc in enumerate(docs):
@@ -282,6 +282,7 @@ class FixLengthRAG(BasicRAG):
                 if self.use_counter == True:
                     self.counter.add_generate(new_text, self.generator.tokenizer)
                 text = text.strip() + " " + new_text.strip()
+                retrieve_question = new_text.strip()
             else:
                 # fix sentence
                 new_text, _, _ = self.generator.generate(prompt, self.generate_max_length)
@@ -293,6 +294,7 @@ class FixLengthRAG(BasicRAG):
                 if len(sentences) == 0:
                     break
                 text = text.strip() + " " + str(sentences[0])
+                retrieve_question = sentences[0]
             
             # 判断 token 的个数要少于 generate_max_length 
             tokens_count = len(self.generator.tokenizer.encode(text))
