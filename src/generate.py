@@ -270,7 +270,7 @@ class FixLengthRAG(BasicRAG):
         retrieve_question = question
         while True:
             old_len = len(text)
-            docs = self.retrieve(retrieve_question, topk=self.retrieve_topk
+            docs = self.retrieve(retrieve_question, topk=self.retrieve_topk)
             prompt = "".join([d["case"]+"\n" for d in demo])
             prompt += "Context:\n"
             for i, doc in enumerate(docs):
@@ -330,7 +330,7 @@ class TokenRAG(BasicRAG):
             }.get(self.sentence_solver, lambda x: 0)(probs)
             if p > self.hallucination_threshold: # hallucination
                 # keep sentences before hallucination 
-                prev = "" if sid == 0 else " ".join(sentences[:sid-1])
+                prev = "" if sid == 0 else " ".join(sentences[:sid])
                 # replace all hallucinated tokens in current sentence with [xxx]
                 curr = sentences[sid]
                 pos = 0
@@ -459,7 +459,7 @@ class EntityRAG(TokenRAG):
             }.get(self.sentence_solver, lambda x: 0)(probs)
             if p > self.hallucination_threshold: # hallucination
                 # keep sentences before hallucination 
-                prev = "" if sid == 0 else " ".join(sentences[:sid-1])
+                prev = "" if sid == 0 else " ".join(sentences[:sid])
                 # replace all hallucinated entities in current sentence with [xxx]
                 curr = sentences[sid]
                 pos = 0
@@ -517,7 +517,7 @@ class AttnWeightRAG(BasicRAG):
                         if not match(tokens[tl+i]):
                             thres[i] = 0                
                 
-                prev = "" if sid == 0 else " ".join(sentences[:sid-1])
+                prev = "" if sid == 0 else " ".join(sentences[:sid])
                 # curr = " ".join(
                 #     [tokens[i] if thres[i] == 0 else "[xxx]" for i in range(len(thres))]
                 # )
