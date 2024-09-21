@@ -10,7 +10,7 @@
 
 
 
-**📢 News: **
+**📢 News:**
 
 We would like to thank @Bocchi7 for reproducing our work with a simplified version of the code. You can check it out here:  
 [https://github.com/Bocchi7/DRAGIN_simplified](https://github.com/Bocchi7/DRAGIN_simplified)
