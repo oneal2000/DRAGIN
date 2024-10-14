@@ -14,7 +14,14 @@ logger = logging.getLogger(__name__)
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config_path", type=str, required=True)
+    parser.add_argument("--debug", action='store_true', help="Enable debug mode")
     args = parser.parse_args()
+    if args.debug:
+        import debugpy
+        debugpy.listen(5679)
+        print("wait for debugger")
+        debugpy.wait_for_client()
+        print("attached")
     config_path = args.config_path
     with open(config_path, "r") as f:
         args = json.load(f)

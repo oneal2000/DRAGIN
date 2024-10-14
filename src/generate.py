@@ -21,10 +21,12 @@ class BasicGenerator:
                     trust_remote_code = "falcon" in model_name_or_path)
         self.model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="auto", 
                     trust_remote_code = "falcon" in model_name_or_path)
-        if self.model_config.model_type == "llama":
+        if self.model_config.model_type in ["llama", "phi3"] and "Llama-3" not in model_name_or_path:
             self.space_token = "▁"
         else:
             self.space_token = self.tokenizer.tokenize(' ')[0]
+        
+        self.sep_ids = [self.tokenizer.encode(token)[1] for token in ['.', '\n']]
         
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -85,7 +87,7 @@ class BasicGenerator:
         # merge tokens
         range_ = []
         for i, t in enumerate(tokens):
-            if i == 0 or t.startswith(self.space_token) or generated_tokens[0][i] == 13 or tokens[i-1] == '</s>':
+            if i == 0 or t.startswith(self.space_token) or generated_tokens[0][i] in self.sep_ids or tokens[i-1] == '</s>':
                 range_.append([i, i])
             else:
                 range_[-1][-1] += 1
@@ -316,12 +318,12 @@ class TokenRAG(BasicRAG):
             pos = 0
             tr = tid
             while tr < len(tokens):
-                apr = sent[pos:].find(tokens[tr])
+                apr = sent[pos:].find(tokens[tr].strip())
                 if apr == -1:
                     break
-                pos = apr + len(tokens[tr])
+                pos += apr + len(tokens[tr].strip())
                 tr += 1
-            probs = [1 - exp(v) for v in logprobs[tid:tr+1]]
+            probs = [1 - exp(v) for v in logprobs[tid:tr]]
             probs = np.array(probs)
             p = {
                 "avg": np.mean,
@@ -339,6 +341,7 @@ class TokenRAG(BasicRAG):
                 # for prob, tok in zip(probs, tokens[tid:tr+1]):
                 #     max_prob = max(prob, max_prob)
                 for prob, tok in zip(probs, tokens[tid:tr+1]):
+                    tok = tok.strip()
                     apr = curr[pos:].find(tok) + pos
                     if prob > self.hallucination_threshold:
                     # if prob == max_prob:
@@ -347,7 +350,9 @@ class TokenRAG(BasicRAG):
                     else:
                         pos = apr + len(tok)
                 return prev, curr, True
-            tid = tr + 1
+            if 'the answer is' in sent.lower():
+                break
+            tid = tr
         
         # No hallucination
         return text, None, False
@@ -528,6 +533,7 @@ class AttnWeightRAG(BasicRAG):
         curr_text = " ".join(curr_tokens)
         all_text = prev_text + " " + curr_text
         input_ids = self.generator.tokenizer.encode(all_text, return_tensors="pt")
+        input_ids = input_ids.to(self.generator.model.device)
         input_length = input_ids.shape[1]
         tokens_tmp = self.generator.tokenizer.convert_ids_to_tokens(input_ids[0])
 
