@@ -1,5 +1,5 @@
 transformers==4.30.2
-beir==1.0.1
+beir
 datasets==2.14.1
 tqdm
 scipy

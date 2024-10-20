@@ -19,14 +19,14 @@ class BasicGenerator:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
         self.model_config = AutoConfig.from_pretrained(model_name_or_path,
                     trust_remote_code = "falcon" in model_name_or_path)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="auto", 
+        self.model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="auto",
                     trust_remote_code = "falcon" in model_name_or_path)
         if self.model_config.model_type in ["llama", "phi3"] and "Llama-3" not in model_name_or_path:
             self.space_token = "▁"
         else:
             self.space_token = self.tokenizer.tokenize(' ')[0]
         
-        self.sep_ids = [self.tokenizer.encode(token)[1] for token in ['.', '\n']]
+        self.sep_ids = [self.tokenizer.encode(token)[-1] for token in ['\n']]
         
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -542,7 +542,7 @@ class AttnWeightRAG(BasicRAG):
         # merge tokens
         range_ = []
         for i, t in enumerate(tokens_tmp):
-            if i == 0 or t.startswith(self.generator.space_token) or input_ids[0][i] == 13:
+            if i == 0 or t.startswith(self.generator.space_token) or input_ids[0][i] in self.generator.sep_ids:
                 range_.append([i, i])
             else:
                 range_[-1][-1] += 1
