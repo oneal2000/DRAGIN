@@ -4,8 +4,8 @@ import argparse
 from tqdm import tqdm
 from copy import copy
 import logging
-from data import StrategyQA, WikiMultiHopQA, HotpotQA, IIRC
-from generate import *
+from data import *
+from algorithm import *
 
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__)
