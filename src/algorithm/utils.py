@@ -10,10 +10,10 @@ class Counter:
         self.token = 0
         self.sentence = 0
 
-    def add_generate(self, text, tokenizer):
+    def add_generate(self, text, tokens):
         self.generate += 1
-        ids = tokenizer(text, return_tensors="pt")['input_ids'][0].tolist()
-        self.token += len(ids)
+        # ids = tokenizer(text, return_tensors="pt")['input_ids'][0].tolist()
+        self.token += len(tokens)
         sentences = [sent.text for sent in nlp(text).sents]
         self.sentence += len(sentences)
 

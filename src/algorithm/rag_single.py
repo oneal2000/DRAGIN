@@ -14,7 +14,7 @@ class SingleRAG(BasicRAG):
             prompt += f"[{i+1}] {doc}\n"
         prompt += "Answer in the same format as before.\n"
         prompt += case
-        text, _, _ = self.generator.generate(prompt, self.generate_max_length)
+        text, tokens, _ = self.generator.generate(prompt, self.generate_max_length)
         if self.use_counter == True:
-            self.counter.add_generate(text, self.generator.tokenizer)
+            self.counter.add_generate(text, tokens)
         return text

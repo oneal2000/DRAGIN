@@ -86,6 +86,10 @@ def main():
         model = EntityRAG(args)
     elif args.method == "attn_prob" or args.method == "dragin":
         model = AttnWeightRAG(args)
+    elif args.method == "flare":
+        model = FlareRAG(args)
+    elif args.method == "entity-flare":
+        model = EntityFlareRAG(args)
     else:
         raise NotImplementedError
 

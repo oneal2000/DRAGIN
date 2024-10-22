@@ -152,7 +152,7 @@ class AttnWeightRAG(BasicRAG):
             weight = entropies if self.method == "dragin" else [-v for v in logprobs]
 
             if self.use_counter == True:
-                self.counter.add_generate(new_text, self.generator.tokenizer)
+                self.counter.add_generate(new_text, tokens)
             hallucination, ptext, curr_tokens, curr_hit =  self.modifier(new_text, tokens, attns, weight)
             
             if not hallucination:
@@ -207,9 +207,9 @@ class AttnWeightRAG(BasicRAG):
                 prompt += " ".join(s for s in tmp_li if len(s) > 0)
                 # print('#####', prompt)
                 # prompt += case + " " + text + " " + ptext.strip()
-                new_text, _, _ = self.generator.generate(prompt, self.generate_max_length)
+                new_text, tokens, _ = self.generator.generate(prompt, self.generate_max_length)
                 if self.use_counter == True:
-                    self.counter.add_generate(new_text, self.generator.tokenizer)
+                    self.counter.add_generate(new_text, tokens)
                     self.counter.hallucinated += 1
                 new_text = self.get_top_sentence(new_text)
                 tmp_li = [text.strip(), ptext.strip(), new_text.strip()]

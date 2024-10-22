@@ -3,15 +3,16 @@ from .utils import nlp
 from math import exp
 import numpy as np
 
-class TokenRAG(BasicRAG):
+class FlareRAG(BasicRAG):
     def __init__(self, args):
         super().__init__(args)
 
-    def modifier(self, text, tokens, logprobs):
+    def modifier(self, text, tokens, logprobs, first_iter):
         sentences = [sent.text.strip() for sent in nlp(text).sents]
         sentences = [sent for sent in sentences if len(sent) > 0]
 
         tid = 0
+        prev_tokens_count = 0
         for sid, sent in enumerate(sentences):
             if 'the answer is' in sent.lower():
                 break
@@ -25,12 +26,14 @@ class TokenRAG(BasicRAG):
                 tr += 1
             probs = [1 - exp(v) for v in logprobs[tid:tr]]
             probs = np.array(probs)
+            if (tid == tr):
+                continue
             p = {
                 "avg": np.mean,
                 "max": np.max,
                 "min": np.min,
             }.get(self.sentence_solver, lambda x: 0)(probs)
-            if p > self.hallucination_threshold: # hallucination
+            if (first_iter or sid > 0) and p > self.hallucination_threshold: # hallucination
                 # keep sentences before hallucination 
                 prev = "" if sid == 0 else " ".join(sentences[:sid])
                 # replace all hallucinated tokens in current sentence with [xxx]
@@ -49,59 +52,64 @@ class TokenRAG(BasicRAG):
                         pos = apr + len("[xxx]")
                     else:
                         pos = apr + len(tok)
-                return prev, curr, True
+                return prev, curr, True, prev_tokens_count
+            prev_tokens_count += tr - tid
             tid = tr
         
         # No hallucination
-        return text, None, False
+        return text, None, False, None
     
     def inference(self, question, demo, case):
         # assert self.query_formulation == "direct"
         text = ""
+        tokens_count = 0
+        exemplars = "".join([d["case"]+"\n" for d in demo])
+        hallucination = False
+        curr = ""
+        first_iter = True
         while True:
-            old_len = len(text)
-            prompt = "".join([d["case"]+"\n" for d in demo])
+            # old_len = len(text)
+            # if tokens_count == 0 or hallucination:
+            if tokens_count == 0 and len(curr) == 0:
+                retrieve_question = question
+            elif self.query_formulation == "direct":
+                retrieve_question = curr.replace("[xxx]", "")
+            elif self.query_formulation == "forward_all":
+                tmp_all = [question, text, ptext]
+                retrieve_question = " ".join(s for s in tmp_all if len(s) > 0)
+            else:
+                raise NotImplemented
+            docs = self.retrieve(retrieve_question, topk=self.retrieve_topk)
+            prompt = exemplars + "Context:\n"
+            for i, doc in enumerate(docs):
+                prompt += f"[{i+1}] {doc}\n"
+            prompt += "Answer in the same format as before. Please ensure that the final sentence of the answer starts with \"So the answer is\".\n"
             prompt += case + " " + text
+            # else:
+            #     prompt = exemplars + case + " " + text
+
             new_text, tokens, logprobs = self.generator.generate(
                 prompt, 
                 self.generate_max_length, 
                 return_logprobs=True
             )
+            ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs, first_iter)
             if self.use_counter == True:
                 self.counter.add_generate(new_text, tokens)
-            ptext, curr, hallucination = self.modifier(new_text, tokens, logprobs)
+                self.counter.hallucinated += hallucination
             if not hallucination:
                 text = text.strip() + " " + new_text.strip()
-            else:
-                if self.query_formulation == "direct":
-                    retrieve_question = curr.replace("[xxx]", "")
-                elif self.query_formulation == "forward_all":
-                    tmp_all = [question, text, ptext]
-                    retrieve_question = " ".join(s for s in tmp_all if len(s) > 0)
-                else:
-                    raise NotImplemented
-
-                docs = self.retrieve(retrieve_question, topk=self.retrieve_topk)
-                prompt = "".join([d["case"]+"\n" for d in demo])
-                prompt += "Context:\n"
-                for i, doc in enumerate(docs):
-                    prompt += f"[{i+1}] {doc}\n"
-                prompt += "Answer in the same format as before.\n"
-                prompt += case + " " + text + " " + ptext.strip()
-                new_text, tokens, _ = self.generator.generate(prompt, self.generate_max_length)
-                if self.use_counter == True:
-                    self.counter.add_generate(new_text, tokens)
-                    self.counter.hallucinated += 1
-                text = text.strip() + " " + ptext.strip() + " " + new_text.strip()
-            
-            # 判断 token 的个数要少于 generate_max_length 
-            tokens_count = len(self.generator.tokenizer.encode(text))
-            if tokens_count > self.generate_max_length or len(text) <= old_len or "the answer is" in text:
+                tokens_count += len(tokens)
+                break
+                
+            text = text.strip() + " " + ptext.strip()
+            tokens_count += ptext_tokens_count
+            first_iter = False
+            if tokens_count > self.generate_max_length:
                 break
         return text
-    
 
-class EntityRAG(TokenRAG):
+class EntityFlareRAG(FlareRAG):
     def __init__(self, args):
         super().__init__(args)
     
@@ -150,9 +158,21 @@ class EntityRAG(TokenRAG):
                 tmp.append(p)
             entity_prob.append(tmp)
 
-        for sid in range(len(sentences)):
+        tid = 0
+        prev_tokens_count = 0
+        for sid, sent in enumerate(sentences):
+            if 'the answer is' in sent.lower():
+                break
             if len(entity_prob[sid]) == 0:
                 continue
+            pos = 0
+            tr = tid
+            while tr < len(tokens):
+                apr = sent[pos:].find(tokens[tr].strip())
+                if apr == -1:
+                    break
+                pos += apr + len(tokens[tr].strip())
+                tr += 1
             probs = [1 - exp(v) for v in entity_prob[sid]]
             probs = np.array(probs)
             p = {
@@ -164,7 +184,7 @@ class EntityRAG(TokenRAG):
                 # keep sentences before hallucination 
                 prev = "" if sid == 0 else " ".join(sentences[:sid])
                 # replace all hallucinated entities in current sentence with [xxx]
-                curr = sentences[sid]
+                curr = sent
                 pos = 0
                 for prob, ent in zip(probs, entity[sid]):
                     apr = curr[pos:].find(ent) + pos
@@ -173,9 +193,11 @@ class EntityRAG(TokenRAG):
                         pos = apr + len("[xxx]")
                     else:
                         pos = apr + len(ent)
-                return prev, curr, True
+                return prev, curr, True, prev_tokens_count
+            prev_tokens_count += tr - tid
+            tid = tr
         # No hallucination
-        return text, None, False
+        return text, None, False, None
 
     def inference(self, question, demo, case):
         return super().inference(question, demo, case)

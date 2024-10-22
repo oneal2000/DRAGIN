@@ -20,9 +20,9 @@ class FixLengthRAG(BasicRAG):
             prompt += case + " " + text
             
             # fix sentence
-            new_text, _, _ = self.generator.generate(prompt, self.generate_max_length)
+            new_text, tokens, _ = self.generator.generate(prompt, self.generate_max_length)
             if self.use_counter == True:
-                self.counter.add_generate(new_text, self.generator.tokenizer)
+                self.counter.add_generate(new_text, tokens)
             new_text = new_text.strip()
             sentences = list(nlp(new_text).sents)
             sentences = [str(sent).strip() for sent in sentences]

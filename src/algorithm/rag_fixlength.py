@@ -19,9 +19,9 @@ class FixLengthRAG(BasicRAG):
             prompt += "Answer in t he same format as before.\n"
             prompt += case + " " + text
 
-            new_text, _, _ = self.generator.generate(prompt, self.fix_length)
+            new_text, tokens, _ = self.generator.generate(prompt, self.fix_length)
             if self.use_counter == True:
-                self.counter.add_generate(new_text, self.generator.tokenizer)
+                self.counter.add_generate(new_text, tokens)
             text = text.strip() + " " + new_text.strip()
             retrieve_question = new_text.strip()
             
