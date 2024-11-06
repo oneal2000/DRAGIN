@@ -15,7 +15,14 @@ logger = logging.getLogger(__name__)
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", type=str, required=True)
+    parser.add_argument("--debug", action='store_true', help="Enable debug mode")
     tmp = parser.parse_args()
+    if tmp.debug:
+        import debugpy
+        debugpy.listen(5679)
+        print("wait for debugger")
+        debugpy.wait_for_client()
+        print("attached")
     with open(os.path.join(tmp.dir, "config.json"), "r") as f:
         args = json.load(f)
     args = argparse.Namespace(**args)
@@ -81,6 +88,7 @@ def main():
     for i in range(len(data.dataset)):
         t = data.dataset[i]
         dataset[t["qid"]] = [
+            t['question'],
             t["answer"], 
             t["answer_id"] if "answer_id" in t else None,
             t["case"] if "case" in t else None
@@ -107,7 +115,7 @@ def main():
         rd = json.loads(line)
         qid = rd["qid"]
         pred = rd["prediction"]
-        ground_truth, ground_truth_id, case = dataset[qid]
+        question, ground_truth, ground_truth_id, case = dataset[qid]
         if need_generate:
             pred = regenerate_answer(pred, tokenizer, model, case, demo) 
         pred = data.get_real_prediction(pred)
@@ -130,10 +138,12 @@ def main():
             for i, k in enumerate(count_list):
                 value[i+4].append(rd[k])
         detail = {
-            "qid": qid, 
+            "qid": qid,
+            "ground_truth": ground_truth,
             "final_pred": pred,
             "EM": str(em_ret["correct"]), 
-            "F1": str(f1_ret["f1"]) 
+            "F1": str(f1_ret["f1"]),
+            "question": question
         }
         pred_out.write(json.dumps(detail)+"\n")
 

@@ -49,7 +49,19 @@ class BasicGenerator:
             logprobs = transition_scores[0]
             logprobs = [p.cpu().numpy() for p in logprobs]
             assert len(tokens) == len(logprobs)
-            return text, tokens, logprobs
+            
+            # DEBUGGG: for entropy
+            if True:
+                tmp = []
+                for v in outputs.scores:
+                    tmp.append(v.cpu())
+                softmax_probs = softmax(tmp, axis=-1)
+                entropies = -np.sum(softmax_probs * np.log(softmax_probs + 1e-10), axis=-1)
+                entropies = [v[0] for v in entropies]
+            else:
+                seqentropies = None
+                # END OF DEBUGGGGGGG
+            return text, tokens, logprobs, entropies
         
         else:
             outputs = self.model.generate(
@@ -59,7 +71,8 @@ class BasicGenerator:
             )
             generated_tokens = outputs[:, input_length:]
             text = self.tokenizer.decode(generated_tokens[0])
-            return text, None, None
+            tokens = [self.tokenizer.decode(t) for t in generated_tokens[0]]
+            return text, tokens, None
     
     def generate_attn(self, input_text, max_length, solver="max", use_entropy = False, use_logprob = False):
         input_ids = self.tokenizer.encode(input_text, return_tensors="pt")

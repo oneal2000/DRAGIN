@@ -4,7 +4,7 @@
     "dataset": "2wikimultihopqa",
     "data_path": "../data/2wikimultihopqa",
     "fewshot": 6,
-    "sample": 1000,
+    "sample": 100,
     "shuffle": false,
     "generate_max_length": 64,
     "query_formulation": "direct",

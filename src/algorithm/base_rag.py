@@ -61,6 +61,20 @@ class BasicRAG:
         assert self.query_formulation == "direct"
         prompt = "".join([d["case"]+"\n" for d in demo])
         prompt += case
+        # DEBUG: for analysis token's confidence
+        new_text, tokens, logprobs, entropies = self.generator.generate(prompt, self.generate_max_length, return_logprobs=True)
+        from math import exp
+        if any(s.endswith('Question') for s in tokens):
+            truncate_id = [i for i, s in enumerate(tokens) if s.endswith("Question")][0]
+            tokens = tokens[:truncate_id]
+            logprobs = logprobs[:truncate_id]
+            entropies = entropies[:truncate_id]
+            new_text = new_text[:new_text.find('Question')]
+        confidence_list = []
+        for token, logprob, entropy in zip(tokens,[logprob.item() for logprob in logprobs], [entropy.item() for entropy in entropies]):
+            confidence_list.append((token, exp(logprob), entropy))
+        return new_text, confidence_list
+        # End of DEBUGGGG
         text, tokens, _ = self.generator.generate(prompt, self.generate_max_length)
         if self.use_counter == True:
             self.counter.add_generate(text, tokens)

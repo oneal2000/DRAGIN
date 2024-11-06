@@ -8,6 +8,9 @@ class AttnWeightRAG(BasicRAG):
         super().__init__(args)
     
     def modifier(self, text, tokens, attentions, weight):
+        # DEBUG: for analysis token's confidence
+        # scores_list = []
+        # End of DEBUGGGG
         sentences = [sent.text.strip() for sent in nlp(text).sents]
         sentences = [sent for sent in sentences if len(sent) > 0]
         tid = 0
@@ -26,6 +29,9 @@ class AttnWeightRAG(BasicRAG):
             attns = attentions[tl:tr]
             attns = np.array(attns) / sum(attns)
             value = [attns[i-tl] * weight[i] * (tr-tl) for i in range(tl, tr)] 
+            # DEBUG: for analysis token's confidence
+            # scores_list += zip(tokens[tl:tr], value, weight)
+            # End of DEBUGGGG
             thres = [1 if v > self.hallucination_threshold else 0 for v in value]
             if 1 in thres:
                 # hallucinated
@@ -46,7 +52,15 @@ class AttnWeightRAG(BasicRAG):
                 # curr = " ".join(
                 #     [tokens[i] if thres[i] == 0 else "[xxx]" for i in range(len(thres))]
                 # )
+                
+                # DEBUG: for analysis token's confidence
+                # return True, prev, tokens[tl:tr], thres, scores_list
+                # End of DEBUGGGG
                 return True, prev, tokens[tl:tr], thres
+        # DEBUG: for analysis token's confidence
+        # return False, text, None, None,scores_list
+        # End of DEBUGGGG
+        
         return False, text, None, None
 
     def keep_real_words(self, prev_text, curr_tokens, curr_hit):
@@ -153,8 +167,16 @@ class AttnWeightRAG(BasicRAG):
 
             if self.use_counter == True:
                 self.counter.add_generate(new_text, tokens)
+            # DEBUG: for analysis token's scores
+            # hallucination, ptext, curr_tokens, curr_hit, scores_list =  self.modifier(new_text, tokens, attns, weight)
+            # if any(s.endswith('Question') for s in tokens):
+            #     truncate_id = [i for i, s in enumerate(tokens) if s.endswith("Question")][0]
+            #     tokens = tokens[:truncate_id]
+            #     scores_list = scores_list[:truncate_id]
+            #     new_text = new_text[:new_text.find('Question')]
+            # return new_text, scores_list
+            # End of DEBUGGGG
             hallucination, ptext, curr_tokens, curr_hit =  self.modifier(new_text, tokens, attns, weight)
-            
             if not hallucination:
                 text = text.strip() + " " + new_text.strip()
             else:

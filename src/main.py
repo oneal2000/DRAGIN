@@ -15,6 +15,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config_path", type=str, required=True)
     parser.add_argument("--debug", action='store_true', help="Enable debug mode")
+    parser.add_argument("--no_log", action='store_true', help="Disable logging mode")
     args = parser.parse_args()
     if args.debug:
         import debugpy
@@ -22,6 +23,7 @@ def get_args():
         print("wait for debugger")
         debugpy.wait_for_client()
         print("attached")
+    enable_logging = not args.no_log
     config_path = args.config_path
     with open(config_path, "r") as f:
         args = json.load(f)
@@ -31,28 +33,29 @@ def get_args():
         args.shuffle = False 
     if "use_counter" not in args:
         args.use_counter = True
+    args.enable_logging = enable_logging
     return args
-
 
 def main():
     args = get_args()
     logger.info(f"{args}")
 
-    # output dir
-    if os.path.exists(args.output_dir) is False:
-        os.makedirs(args.output_dir)
-    dir_name = os.listdir(args.output_dir)
-    for i in range(10000):
-        if str(i) not in dir_name:
-            args.output_dir = os.path.join(args.output_dir, str(i))
+    if args.enable_logging:
+        # output dir
+        if os.path.exists(args.output_dir) is False:
             os.makedirs(args.output_dir)
-            break
-    logger.info(f"output dir: {args.output_dir}")
-    # save config
-    with open(os.path.join(args.output_dir, "config.json"), "w") as f:
-        json.dump(args.__dict__, f, indent=4)
-    # create output file
-    output_file = open(os.path.join(args.output_dir, "output.txt"), "w")
+        dir_name = os.listdir(args.output_dir)
+        for i in range(10000):
+            if str(i) not in dir_name:
+                args.output_dir = os.path.join(args.output_dir, str(i))
+                os.makedirs(args.output_dir)
+                break
+        logger.info(f"output dir: {args.output_dir}")
+        # save config
+        with open(os.path.join(args.output_dir, "config.json"), "w") as f:
+            json.dump(args.__dict__, f, indent=4)
+        # create output file
+        output_file = open(os.path.join(args.output_dir, "output.txt"), "w")
 
     # load data
     if args.dataset == "strategyqa":
@@ -94,10 +97,26 @@ def main():
         raise NotImplementedError
 
     logger.info("start inference")
+    # DEBUG: for analysis token's confidence
+    token_prob_file = open(os.path.join(args.output_dir, "token_scores.txt"), "w")
+    # End of DEBUGGGG
     for i in tqdm(range(len(data))):
         last_counter = copy(model.counter)
         batch = data[i]
         pred = model.inference(batch["question"], batch["demo"], batch["case"])
+        # DEBUG: for analysis token's confidence
+        # text, confidence_list = pred
+        # ret = {
+        #     "qid": batch["qid"], 
+        #     "question": batch["question"],
+        #     "ground_truth": batch["answer"],
+        #     "prediction": text,
+        #     "token_scores": confidence_list
+        # }
+        # if args.enable_logging:
+        #     token_prob_file.write(json.dumps(ret)+"\n")
+        # continue
+        # End of DEBUGGGG
         pred = pred.strip()
         ret = {
             "qid": batch["qid"], 
@@ -105,7 +124,8 @@ def main():
         }
         if args.use_counter:
             ret.update(model.counter.calc(last_counter))
-        output_file.write(json.dumps(ret)+"\n")
+        if args.enable_logging:
+            output_file.write(json.dumps(ret)+"\n")
     
 
 if __name__ == "__main__":
