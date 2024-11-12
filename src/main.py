@@ -83,10 +83,8 @@ def main():
         model = SingleRAG(args)
     elif args.method == "fix-length-retrieval" or args.method == "fix-sentence-retrieval":
         model = FixLengthRAG(args)
-    elif args.method == "token":
-        model = TokenRAG(args)
-    elif args.method == "entity":
-        model = EntityRAG(args)
+    elif args.method == "flare":
+        model = FlareRAG(args)
     elif args.method == "attn_prob" or args.method == "dragin":
         model = AttnWeightRAG(args)
     elif args.method == "flare":
@@ -94,11 +92,11 @@ def main():
     elif args.method == "entity-flare":
         model = EntityFlareRAG(args)
     else:
-        raise NotImplementedError
+        model = OurRAG(args)
 
     logger.info("start inference")
     # DEBUG: for analysis token's confidence
-    token_prob_file = open(os.path.join(args.output_dir, "token_scores.txt"), "w")
+    # token_prob_file = open(os.path.join(args.output_dir, "token_scores.txt"), "w")
     # End of DEBUGGGG
     for i in tqdm(range(len(data))):
         last_counter = copy(model.counter)

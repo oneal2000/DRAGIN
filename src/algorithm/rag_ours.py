@@ -3,7 +3,7 @@ from .utils import nlp
 from math import exp
 import numpy as np
 
-class FlareRAG(BasicRAG):
+class OurRAG(BasicRAG):
     def __init__(self, args):
         super().__init__(args)
 
@@ -115,6 +115,7 @@ class FlareRAG(BasicRAG):
         exemplars = "".join([d["case"]+"\n" for d in demo])
         hallucination = False
         curr = ""
+        iter = 0
         while True:
             # old_len = len(text)
             # if tokens_count == 0 or hallucination:
@@ -188,7 +189,7 @@ class FlareRAG(BasicRAG):
                     prompt = exemplars + case + " " + text.strip()
                     final_answer, _, _ = self.generator.generate(
                         prompt, 
-                        self.generate_max_length / 2
+                        self.generate_max_length - tokens_count
                     )
                 # END OF DEBUGGGG
                 text = text.strip() + " " + final_answer.strip()
@@ -199,97 +200,7 @@ class FlareRAG(BasicRAG):
             tokens_count += ptext_tokens_count
             if tokens_count > self.generate_max_length:
                 break
-        return text
-
-class EntityFlareRAG(FlareRAG):
-    def __init__(self, args):
-        super().__init__(args)
-    
-    def modifier(self, text, tokens, logprobs):
-        sentences = [sent.text.strip() for sent in nlp(text).sents]
-        sentences = [sent for sent in sentences if len(sent) > 0]
-
-        entity = []
-        for sent in sentences:
-            doc = nlp(sent)
-            li = [ent.text for ent in doc.ents]
-            entity.append(li)
-        
-        belonging = [-1] * len(text)
-        pos = 0
-        for tid, tok in enumerate(tokens):
-            apr = text[pos:].find(tok) + pos
-            assert apr != -1
-            for j in range(pos, apr+len(tok)):
-                belonging[j] = tid
-            pos = apr + len(tok)
-        
-        entity_intv = []
-        for sid, sent in enumerate(sentences):
-            tmp = []
-            pos = text.find(sent)
-            for ent in entity[sid]:
-                apr = text[pos:].find(ent) + pos
-                el = belonging[apr]
-                er = belonging[apr + len(ent) - 1]
-                tmp.append((el, er))
-                pos = apr + len(ent)
-            entity_intv.append(tmp)
-
-        entity_prob = []
-        for ent_itv_per_sent in entity_intv:
-            tmp = []
-            for itv in ent_itv_per_sent:
-                probs = np.array(logprobs[itv[0]:itv[1]+1])
-                p = {
-                    "avg": np.mean,
-                    "max": np.max,
-                    "min": np.min,
-                    "first": lambda x: x[0] if len(x) > 0 else 0
-                }.get(self.entity_solver, lambda x: 0)(probs)
-                tmp.append(p)
-            entity_prob.append(tmp)
-
-        tid = 0
-        prev_tokens_count = 0
-        for sid, sent in enumerate(sentences):
-            if 'the answer is' in sent.lower():
+            iter += 1
+            if iter > 12:
                 break
-            if len(entity_prob[sid]) == 0:
-                continue
-            pos = 0
-            tr = tid
-            while tr < len(tokens):
-                apr = sent[pos:].find(tokens[tr].strip())
-                if apr == -1:
-                    break
-                pos += apr + len(tokens[tr].strip())
-                tr += 1
-            probs = [1 - exp(v) for v in entity_prob[sid]]
-            probs = np.array(probs)
-            p = {
-                "avg": np.mean,
-                "max": np.max,
-                "min": np.min,
-            }.get(self.sentence_solver, lambda x: 0)(probs)
-            if p > self.hallucination_threshold: # hallucination
-                # keep sentences before hallucination 
-                prev = "" if sid == 0 else " ".join(sentences[:sid])
-                # replace all hallucinated entities in current sentence with [xxx]
-                curr = sent
-                pos = 0
-                for prob, ent in zip(probs, entity[sid]):
-                    apr = curr[pos:].find(ent) + pos
-                    if prob > self.hallucination_threshold:
-                        curr = curr[:apr] + "[xxx]" + curr[apr+len(ent):]
-                        pos = apr + len("[xxx]")
-                    else:
-                        pos = apr + len(ent)
-                return prev, curr, True, prev_tokens_count
-            prev_tokens_count += tr - tid
-            tid = tr
-        # No hallucination
-        return text, None, False, None
-
-    def inference(self, question, demo, case):
-        return super().inference(question, demo, case)
+        return text
