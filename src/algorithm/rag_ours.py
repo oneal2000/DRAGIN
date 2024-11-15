@@ -59,14 +59,16 @@ class OurRAG(BasicRAG):
         # No hallucination
         return text, None, False, None
     
-    def modifier_new(self, text, tokens, logprobs, entropies):
+    def modifier_new(self, text, tokens, logprobs, entropies, threshold_scale):
         sentences = [sent.text.strip() for sent in nlp(text).sents]
         sentences = [sent for sent in sentences if len(sent) > 0]
 
         tid = 0
         prev_tokens_count = 0
+        prev = ""
         for sid, sent in enumerate(sentences):
             if 'the answer is' in sent.lower():
+                prev = " ".join(sentences[:sid+1])
                 break
             pos = 0
             tr = tid
@@ -81,7 +83,7 @@ class OurRAG(BasicRAG):
             cur_entropies = np.array(entropies[tid:tr])
             if (tid == tr):
                 continue
-            hallucination_list = (probs < (cur_entropies / 2.5))
+            hallucination_list = (probs < (cur_entropies * threshold_scale / 2.5))
             if np.any(hallucination_list): # hallucination
                 # keep sentences before hallucination 
                 prev = "" if sid == 0 else " ".join(sentences[:sid])
@@ -106,7 +108,7 @@ class OurRAG(BasicRAG):
             tid = tr
         
         # No hallucination
-        return text, None, False, None
+        return prev, None, False, None
     
     def inference(self, question, demo, case):
         # assert self.query_formulation == "direct"
@@ -116,6 +118,7 @@ class OurRAG(BasicRAG):
         hallucination = False
         curr = ""
         iter = 0
+        threshold_scale = 1
         while True:
             # old_len = len(text)
             # if tokens_count == 0 or hallucination:
@@ -171,7 +174,7 @@ class OurRAG(BasicRAG):
                     self.generate_max_length - tokens_count, 
                     return_logprobs=True
                 )
-            ptext, curr, hallucination, ptext_tokens_count = self.modifier_new(new_text, tokens, logprobs, entropies)
+            ptext, curr, hallucination, ptext_tokens_count = self.modifier_new(new_text, tokens, logprobs, entropies, threshold_scale)
             # ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs)
             if self.use_counter == True:
                 self.counter.add_generate(new_text, tokens)
@@ -198,9 +201,10 @@ class OurRAG(BasicRAG):
                 
             text = text.strip() + " " + ptext.strip()
             tokens_count += ptext_tokens_count
-            if tokens_count > self.generate_max_length:
+            if tokens_count > self.generate_max_length or "the answer is" in text:
                 break
             iter += 1
+            threshold_scale *= 2
             if iter > 12:
                 break
-        return text
+        return text.strip()
