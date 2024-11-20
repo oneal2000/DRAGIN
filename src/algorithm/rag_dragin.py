@@ -14,7 +14,11 @@ class AttnWeightRAG(BasicRAG):
         sentences = [sent.text.strip() for sent in nlp(text).sents]
         sentences = [sent for sent in sentences if len(sent) > 0]
         tid = 0
+        prev = ""
         for sid, sent in enumerate(sentences):
+            if 'the answer is' in sent.lower():
+                prev = "" if sid == 0 else " ".join(sentences[:sid + 1])
+                break
             tl, tr = tid, tid
             if sid == len(sentences) - 1:
                 tl, tr = tid, len(tokens)
@@ -61,7 +65,7 @@ class AttnWeightRAG(BasicRAG):
         # return False, text, None, None,scores_list
         # End of DEBUGGGG
         
-        return False, text, None, None
+        return False, prev, None, None
 
     def keep_real_words(self, prev_text, curr_tokens, curr_hit):
         curr_text = " ".join(curr_tokens)

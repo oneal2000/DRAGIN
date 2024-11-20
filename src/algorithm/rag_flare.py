@@ -105,7 +105,7 @@ class FlareRAG(BasicRAG):
             text = text.strip() + " " + ptext.strip()
             tokens_count += ptext_tokens_count
             first_iter = False
-            if tokens_count > self.generate_max_length:
+            if tokens_count > self.generate_max_length or "the answer is" in text:
                 break
         return text.strip()
 
