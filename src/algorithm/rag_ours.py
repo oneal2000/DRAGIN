@@ -6,60 +6,8 @@ import numpy as np
 class OurRAG(BasicRAG):
     def __init__(self, args):
         super().__init__(args)
-
-    def modifier(self, text, tokens, logprobs):
-        sentences = [sent.text.strip() for sent in nlp(text).sents]
-        sentences = [sent for sent in sentences if len(sent) > 0]
-
-        tid = 0
-        prev_tokens_count = 0
-        for sid, sent in enumerate(sentences):
-            if 'the answer is' in sent.lower():
-                break
-            pos = 0
-            tr = tid
-            while tr < len(tokens):
-                apr = sent[pos:].find(tokens[tr].strip())
-                if apr == -1:
-                    break
-                pos += apr + len(tokens[tr].strip())
-                tr += 1
-            probs = [1 - exp(v) for v in logprobs[tid:tr]]
-            probs = np.array(probs)
-            if (tid == tr):
-                continue
-            p = {
-                "avg": np.mean,
-                "max": np.max,
-                "min": np.min,
-            }.get(self.sentence_solver, lambda x: 0)(probs)
-            if sid > 0 and p > self.hallucination_threshold: # hallucination
-                # keep sentences before hallucination 
-                prev = "" if sid == 0 else " ".join(sentences[:sid])
-                # replace all hallucinated tokens in current sentence with [xxx]
-                curr = sent
-                pos = 0
-                # # 这里改成了替换掉最大的那个，而不是所有的
-                # max_prob = 0
-                # for prob, tok in zip(probs, tokens[tid:tr+1]):
-                #     max_prob = max(prob, max_prob)
-                for prob, tok in zip(probs, tokens[tid:tr+1]):
-                    tok = tok.strip()
-                    apr = curr[pos:].find(tok) + pos
-                    if prob > self.hallucination_threshold:
-                    # if prob == max_prob:
-                        curr = curr[:apr] + "[xxx]" + curr[apr+len(tok):]
-                        pos = apr + len("[xxx]")
-                    else:
-                        pos = apr + len(tok)
-                return prev, curr, True, prev_tokens_count
-            prev_tokens_count += tr - tid
-            tid = tr
-        
-        # No hallucination
-        return text, None, False, None
     
-    def modifier_new(self, text, tokens, logprobs, entropies, threshold_scale):
+    def modifier(self, text, tokens, logprobs, entropies, threshold_scale):
         sentences = [sent.text.strip() for sent in nlp(text).sents]
         sentences = [sent for sent in sentences if len(sent) > 0]
 
@@ -174,7 +122,7 @@ class OurRAG(BasicRAG):
                     self.generate_max_length - tokens_count, 
                     return_logprobs=True
                 )
-            ptext, curr, hallucination, ptext_tokens_count = self.modifier_new(new_text, tokens, logprobs, entropies, threshold_scale)
+            ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs, entropies, threshold_scale)
             # ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs)
             if self.use_counter == True:
                 self.counter.add_generate(new_text, tokens)

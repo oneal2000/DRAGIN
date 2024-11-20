@@ -1,4 +1,6 @@
-data/
+data
+!src/data
 result
 **/__pycache__
 config
+result*
