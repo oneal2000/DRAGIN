@@ -31,7 +31,7 @@ class OurRAG(BasicRAG):
             cur_entropies = np.array(entropies[tid:tr])
             if (tid == tr):
                 continue
-            hallucination_list = (probs < (cur_entropies * threshold_scale / 2.5))
+            hallucination_list = (probs < (cur_entropies / 2.5))
             if np.any(hallucination_list): # hallucination
                 # keep sentences before hallucination 
                 prev = "" if sid == 0 else " ".join(sentences[:sid])
@@ -115,13 +115,18 @@ class OurRAG(BasicRAG):
             )
             if hallucination:
                 sentences = [sent.text.strip() for sent in nlp(new_text).sents]
-                text = text.strip() + " " + sentences[0].strip()
+                for sentence in sentences:
+                    if sentence.strip() != "":
+                        text = text.strip() + " " + sentence.strip()
+                        break
                 prompt =  exemplars + case + " " + text.strip()
                 new_text, tokens, logprobs, entropies = self.generator.generate(
                     prompt, 
                     self.generate_max_length - tokens_count, 
                     return_logprobs=True
                 )
+                if "the answer is" in text:
+                    break
             ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs, entropies, threshold_scale)
             # ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs)
             if self.use_counter == True:
@@ -151,8 +156,5 @@ class OurRAG(BasicRAG):
             tokens_count += ptext_tokens_count
             if tokens_count > self.generate_max_length or "the answer is" in text:
                 break
-            iter += 1
             threshold_scale *= 2
-            if iter > 12:
-                break
         return text.strip()
