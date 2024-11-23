@@ -13,8 +13,12 @@ class FlareRAG(BasicRAG):
 
         tid = 0
         prev_tokens_count = 0
+        prev = ""
         for sid, sent in enumerate(sentences):
             if 'the answer is' in sent.lower():
+                if prev != "":
+                    prev += " "
+                prev += sent
                 break
             pos = 0
             tr = tid
@@ -24,18 +28,10 @@ class FlareRAG(BasicRAG):
                     break
                 pos += apr + len(tokens[tr].strip())
                 tr += 1
-            probs = [1 - exp(v) for v in logprobs[tid:tr]]
-            probs = np.array(probs)
+            probs = np.array([exp(v) for v in logprobs[tid:tr]])
             if (tid == tr):
                 continue
-            p = {
-                "avg": np.mean,
-                "max": np.max,
-                "min": np.min,
-            }.get(self.sentence_solver, lambda x: 0)(probs)
-            if (first_iter or sid > 0) and p > self.hallucination_threshold: # hallucination
-                # keep sentences before hallucination 
-                prev = "" if sid == 0 else " ".join(sentences[:sid])
+            if (first_iter or sid > 0) and np.min(probs) < self.threshold: # hallucination
                 # replace all hallucinated tokens in current sentence with [xxx]
                 curr = sent
                 pos = 0
@@ -43,10 +39,10 @@ class FlareRAG(BasicRAG):
                 # max_prob = 0
                 # for prob, tok in zip(probs, tokens[tid:tr+1]):
                 #     max_prob = max(prob, max_prob)
-                for prob, tok in zip(probs, tokens[tid:tr+1]):
+                for prob, tok in zip(probs, tokens[tid:tr]):
                     tok = tok.strip()
                     apr = curr[pos:].find(tok) + pos
-                    if prob > self.hallucination_threshold:
+                    if prob < self.threshold:
                     # if prob == max_prob:
                         curr = curr[:apr] + "[xxx]" + curr[apr+len(tok):]
                         pos = apr + len("[xxx]")
@@ -54,13 +50,15 @@ class FlareRAG(BasicRAG):
                         pos = apr + len(tok)
                 return prev, curr, True, prev_tokens_count
             prev_tokens_count += tr - tid
+            if prev != "":
+                prev += " "
+            prev += sent
             tid = tr
         
         # No hallucination
-        return text, None, False, None
+        return prev, None, False, None
     
     def inference(self, question, demo, case):
-        # assert self.query_formulation == "direct"
         text = ""
         tokens_count = 0
         exemplars = "".join([d["case"]+"\n" for d in demo])
@@ -68,8 +66,6 @@ class FlareRAG(BasicRAG):
         curr = ""
         first_iter = True
         while True:
-            # old_len = len(text)
-            # if tokens_count == 0 or hallucination:
             if tokens_count == 0 and len(curr) == 0:
                 retrieve_question = question
             elif self.query_formulation == "direct":
@@ -85,8 +81,6 @@ class FlareRAG(BasicRAG):
                 prompt += f"[{i+1}] {doc}\n"
             prompt += "Answer in the same format as before. Please ensure that the final sentence of the answer starts with \"So the answer is\".\n"
             prompt += case + " " + text
-            # else:
-            #     prompt = exemplars + case + " " + text
 
             new_text, tokens, logprobs, _ = self.generator.generate(
                 prompt, 
@@ -98,7 +92,7 @@ class FlareRAG(BasicRAG):
                 self.counter.add_generate(new_text, tokens)
                 self.counter.hallucinated += hallucination
             if not hallucination:
-                text = text.strip() + " " + new_text.strip()
+                text = text.strip() + " " + ptext.strip()
                 tokens_count += len(tokens)
                 break
                 
