@@ -7,7 +7,7 @@ class OurRAG(BasicRAG):
     def __init__(self, args):
         super().__init__(args)
     
-    def modifier(self, text, tokens, logprobs, entropies, threshold_scale):
+    def modifier(self, text, tokens, logprobs, entropies):
         sentences = [sent.text.strip() for sent in nlp(text).sents]
         sentences = [sent for sent in sentences if len(sent) > 0]
 
@@ -16,7 +16,9 @@ class OurRAG(BasicRAG):
         prev = ""
         for sid, sent in enumerate(sentences):
             if 'the answer is' in sent.lower():
-                prev = " ".join(sentences[:sid+1])
+                if prev != "":
+                    prev += " "
+                prev += sent
                 break
             pos = 0
             tr = tid
@@ -31,10 +33,8 @@ class OurRAG(BasicRAG):
             cur_entropies = np.array(entropies[tid:tr])
             if (tid == tr):
                 continue
-            hallucination_list = (probs < (cur_entropies / 2.5))
+            hallucination_list = (probs < self.threshold)
             if np.any(hallucination_list): # hallucination
-                # keep sentences before hallucination 
-                prev = "" if sid == 0 else " ".join(sentences[:sid])
                 # replace all hallucinated tokens in current sentence with [xxx]
                 curr = sent
                 pos = 0
@@ -42,7 +42,7 @@ class OurRAG(BasicRAG):
                 # max_prob = 0
                 # for prob, tok in zip(probs, tokens[tid:tr+1]):
                 #     max_prob = max(prob, max_prob)
-                for prob, hallucination, tok in zip(probs, hallucination_list, tokens[tid:tr+1]):
+                for hallucination, tok in zip(hallucination_list, tokens[tid:tr]):
                     tok = tok.strip()
                     apr = curr[pos:].find(tok) + pos
                     if hallucination:
@@ -53,6 +53,9 @@ class OurRAG(BasicRAG):
                         pos = apr + len(tok)
                 return prev, curr, True, prev_tokens_count
             prev_tokens_count += tr - tid
+            if prev != "":
+                prev += " "
+            prev += sent
             tid = tr
         
         # No hallucination
@@ -66,7 +69,6 @@ class OurRAG(BasicRAG):
         hallucination = False
         curr = ""
         iter = 0
-        threshold_scale = 1
         while True:
             # old_len = len(text)
             # if tokens_count == 0 or hallucination:
@@ -114,20 +116,14 @@ class OurRAG(BasicRAG):
                 return_logprobs=True
             )
             if hallucination:
-                sentences = [sent.text.strip() for sent in nlp(new_text).sents]
-                for sentence in sentences:
-                    if sentence.strip() != "":
-                        text = text.strip() + " " + sentence.strip()
-                        break
+                text = text.strip() + self.get_top_sentence(new_text)
                 prompt =  exemplars + case + " " + text.strip()
                 new_text, tokens, logprobs, entropies = self.generator.generate(
                     prompt, 
                     self.generate_max_length - tokens_count, 
                     return_logprobs=True
                 )
-                if "the answer is" in text:
-                    break
-            ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs, entropies, threshold_scale)
+            ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs, entropies)
             # ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs)
             if self.use_counter == True:
                 self.counter.add_generate(new_text, tokens)
@@ -141,12 +137,14 @@ class OurRAG(BasicRAG):
                 # thus_truncate = -1
                 if so_truncate >=0 or thus_truncate >=0:
                     truncate_idx = so_truncate if thus_truncate < 0 else thus_truncate if so_truncate < 0 else min(so_truncate, thus_truncate)
-                    text = text[:truncate_idx]
+                    text = text[:truncate_idx + 1]
                     prompt = exemplars + case + " " + text.strip()
                     final_answer, _, _ = self.generator.generate(
                         prompt, 
                         self.generate_max_length - tokens_count
                     )
+                if '\nQuestion' in final_answer:
+                    final_answer = final_answer[:final_answer.find('\nQuestion')]
                 # END OF DEBUGGGG
                 text = text.strip() + " " + final_answer.strip()
                 tokens_count += len(tokens)
@@ -156,5 +154,4 @@ class OurRAG(BasicRAG):
             tokens_count += ptext_tokens_count
             if tokens_count > self.generate_max_length or "the answer is" in text:
                 break
-            threshold_scale *= 2
         return text.strip()

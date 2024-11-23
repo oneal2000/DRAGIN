@@ -171,15 +171,6 @@ class AttnWeightRAG(BasicRAG):
 
             if self.use_counter == True:
                 self.counter.add_generate(new_text, tokens)
-            # DEBUG: for analysis token's scores
-            # hallucination, ptext, curr_tokens, curr_hit, scores_list =  self.modifier(new_text, tokens, attns, weight)
-            # if any(s.endswith('Question') for s in tokens):
-            #     truncate_id = [i for i, s in enumerate(tokens) if s.endswith("Question")][0]
-            #     tokens = tokens[:truncate_id]
-            #     scores_list = scores_list[:truncate_id]
-            #     new_text = new_text[:new_text.find('Question')]
-            # return new_text, scores_list
-            # End of DEBUGGGG
             hallucination, ptext, curr_tokens, curr_hit =  self.modifier(new_text, tokens, attns, weight)
             if not hallucination:
                 text = text.strip() + " " + new_text.strip()
@@ -241,14 +232,6 @@ class AttnWeightRAG(BasicRAG):
                 tmp_li = [text.strip(), ptext.strip(), new_text.strip()]
                 text = " ".join(s for s in tmp_li if len(s) > 0)
                 # text = text.strip() + " " + ptext.strip() + " " + new_text.strip()
-
-                # print("### retrieve_question ###")
-                # print(retrieve_question)
-                # context = "### Context: ###\n"
-                # for i, doc in enumerate(docs):
-                #     context += f"[{i+1}] {doc}\n" 
-                # print(context)
-                # print(text)
             
             # 判断 token 的个数要少于 generate_max_length 
             tokens_count = len(self.generator.tokenizer.encode(text))
