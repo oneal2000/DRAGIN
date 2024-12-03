@@ -25,43 +25,54 @@ class BasicGenerator:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-    def generate(self, input_text, max_length, return_logprobs=False):
+    def generate(self, input_text, max_length, return_logprobs=False, num_return_sequences=1, return_entropies=False, temperature=1.0):
         input_ids = self.tokenizer.encode(input_text, return_tensors="pt")
         input_ids = input_ids.to(self.model.device)
         input_length = input_ids.shape[1]
         attention_mask = torch.ones_like(input_ids)
 
+        return_dict = {}
+        
         if return_logprobs:
             outputs = self.model.generate(
                 input_ids = input_ids, 
                 attention_mask = attention_mask,
                 max_new_tokens = max_length, 
+                num_return_sequences = num_return_sequences,
                 return_dict_in_generate = True, 
                 output_scores = True,
+                temperature=temperature
             )
             transition_scores = self.model.compute_transition_scores(
                 outputs.sequences, outputs.scores, normalize_logits=True
             )
 
             generated_tokens = outputs.sequences[:, input_length:]
-            text = self.tokenizer.decode(generated_tokens[0]) # text = "".join(tokens)
-            tokens = [self.tokenizer.decode(t) for t in generated_tokens[0]]
-            logprobs = transition_scores[0]
-            logprobs = [p.cpu().numpy() for p in logprobs]
-            assert len(tokens) == len(logprobs)
-            
+            if num_return_sequences == 1:
+                text = self.tokenizer.decode(generated_tokens[0]) # text = "".join(tokens)
+                tokens = [self.tokenizer.decode(t) for t in generated_tokens[0]]
+                logprobs = transition_scores[0]
+                logprobs = [p.cpu().numpy() for p in logprobs]
+                assert len(tokens) == len(logprobs)
+            else:
+                text = [self.tokenizer.decode(generated_tokens[i]) for i in range(num_return_sequences)]
+                tokens = [[self.tokenizer.decode(t) for t in generated_tokens[i]] for i in range(num_return_sequences)]
+                logprobs = [transition_scores[i] for i in range(num_return_sequences)]
+                logprobs = [[p.cpu().numpy() for p in row] for row in logprobs]
             # DEBUGGG: for entropy
-            if True:
+            if return_entropies:
                 tmp = []
                 for v in outputs.scores:
                     tmp.append(v.cpu())
                 softmax_probs = softmax(tmp, axis=-1)
                 entropies = -np.sum(softmax_probs * np.log(softmax_probs + 1e-10), axis=-1)
-                entropies = [v[0] for v in entropies]
-            else:
-                seqentropies = None
+                seqentropies = [v[0] for v in entropies]
+                return_dict['entropies'] = seqentropies
                 # END OF DEBUGGGGGGG
-            return text, tokens, logprobs, entropies
+
+            return_dict['text'] = text
+            return_dict['tokens'] = tokens
+            return_dict['logprobs'] = logprobs
         
         else:
             outputs = self.model.generate(
@@ -72,7 +83,10 @@ class BasicGenerator:
             generated_tokens = outputs[:, input_length:]
             text = self.tokenizer.decode(generated_tokens[0])
             tokens = [self.tokenizer.decode(t) for t in generated_tokens[0]]
-            return text, tokens, None
+            return_dict['text'] = text
+            return_dict['tokens'] = tokens
+        
+        return return_dict
     
     def generate_attn(self, input_text, max_length, solver="max", use_entropy = False, use_logprob = False):
         input_ids = self.tokenizer.encode(input_text, return_tensors="pt")

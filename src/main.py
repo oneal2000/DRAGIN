@@ -91,8 +91,10 @@ def main():
         model = FlareRAG(args)
     elif args.method == "entity-flare":
         model = EntityFlareRAG(args)
-    else:
-        model = OurRAG(args)
+    elif args.method == "semantic_entropy":
+        model = SemanticEntropyRAG(args)
+    elif args.method == "dynamic_thresholding":
+        model = DynamicThresholdingRAG(args)
 
     logger.info("start inference")
     # DEBUG: for analysis token's confidence
@@ -102,19 +104,6 @@ def main():
         last_counter = copy(model.counter)
         batch = data[i]
         pred = model.inference(batch["question"], batch["demo"], batch["case"])
-        # DEBUG: for analysis token's confidence
-        # text, confidence_list = pred
-        # ret = {
-        #     "qid": batch["qid"], 
-        #     "question": batch["question"],
-        #     "ground_truth": batch["answer"],
-        #     "prediction": text,
-        #     "token_scores": confidence_list
-        # }
-        # if args.enable_logging:
-        #     token_prob_file.write(json.dumps(ret)+"\n")
-        # continue
-        # End of DEBUGGGG
         pred = pred.strip()
         ret = {
             "qid": batch["qid"], 

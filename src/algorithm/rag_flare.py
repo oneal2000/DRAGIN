@@ -12,7 +12,6 @@ class FlareRAG(BasicRAG):
         sentences = [sent for sent in sentences if len(sent) > 0]
 
         tid = 0
-        prev_tokens_count = 0
         prev = ""
         for sid, sent in enumerate(sentences):
             if 'the answer is' in sent.lower():
@@ -48,25 +47,23 @@ class FlareRAG(BasicRAG):
                         pos = apr + len("[xxx]")
                     else:
                         pos = apr + len(tok)
-                return prev, curr, True, prev_tokens_count
-            prev_tokens_count += tr - tid
+                return prev, curr, True
             if prev != "":
                 prev += " "
             prev += sent
             tid = tr
         
         # No hallucination
-        return prev, None, False, None
+        return prev, None, False
     
     def inference(self, question, demo, case):
         text = ""
-        tokens_count = 0
         exemplars = "".join([d["case"]+"\n" for d in demo])
         hallucination = False
         curr = ""
         first_iter = True
         while True:
-            if tokens_count == 0 and len(curr) == 0:
+            if first_iter and len(curr) == 0:
                 retrieve_question = question
             elif self.query_formulation == "direct":
                 retrieve_question = curr.replace("[xxx]", "")
@@ -82,22 +79,22 @@ class FlareRAG(BasicRAG):
             prompt += "Answer in the same format as before. Please ensure that the final sentence of the answer starts with \"So the answer is\".\n"
             prompt += case + " " + text
 
-            new_text, tokens, logprobs, _ = self.generator.generate(
+            return_dict = self.generator.generate(
                 prompt, 
                 self.generate_max_length, 
                 return_logprobs=True
             )
-            ptext, curr, hallucination, ptext_tokens_count = self.modifier(new_text, tokens, logprobs, first_iter)
+            new_text, tokens, logprobs = return_dict['text'], return_dict['tokens'], return_dict['logprobs']
+            ptext, curr, hallucination = self.modifier(new_text, tokens, logprobs, first_iter)
             if self.use_counter == True:
                 self.counter.add_generate(new_text, tokens)
                 self.counter.hallucinated += hallucination
             if not hallucination:
                 text = text.strip() + " " + ptext.strip()
-                tokens_count += len(tokens)
                 break
                 
             text = text.strip() + " " + ptext.strip()
-            tokens_count += ptext_tokens_count
+            tokens_count = len(self.generator.tokenizer.encode(text))
             first_iter = False
             if tokens_count > self.generate_max_length or "the answer is" in text:
                 break
@@ -153,7 +150,6 @@ class EntityFlareRAG(FlareRAG):
             entity_prob.append(tmp)
 
         tid = 0
-        prev_tokens_count = 0
         for sid, sent in enumerate(sentences):
             if 'the answer is' in sent.lower():
                 break
@@ -187,11 +183,10 @@ class EntityFlareRAG(FlareRAG):
                         pos = apr + len("[xxx]")
                     else:
                         pos = apr + len(ent)
-                return prev, curr, True, prev_tokens_count
-            prev_tokens_count += tr - tid
+                return prev, curr, True
             tid = tr
         # No hallucination
-        return text, None, False, None
+        return text, None, False
 
     def inference(self, question, demo, case):
         return super().inference(question, demo, case)
