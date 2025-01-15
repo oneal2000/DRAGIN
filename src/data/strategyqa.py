@@ -110,7 +110,7 @@ class StrategyQA(BaseDataset):
             example["ctxs"] = " ".join(ctxs)
             dataset.append(example)
         self.dataset = Dataset.from_list(dataset)
-
+    
     def get_real_prediction(self, pred):
         answer_prompts = ["the answer is"]
         for prmt in answer_prompts:

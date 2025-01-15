@@ -90,17 +90,3 @@ class WikiMultiHopQA(BaseDataset):
             return cls.id_alias[ground_truth_id]
         else:
             return []
-
-    def get_real_prediction(self, pred):
-        if "the answer is" in pred:
-            beg = pred.find("the answer is") + len("the answer is") + 1
-            pred = pred[beg:] # delete final "."
-            if pred.endswith("</s>"):
-                pred = pred[:len(pred) - len("</s>")]
-            if pred.endswith("<|endoftext|>"):
-                pred = pred[:len(pred) - len("<|endoftext|>")]
-            if pred.endswith("."):
-                pred = pred[:-1]
-            return pred
-        else:
-            return pred

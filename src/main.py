@@ -23,7 +23,6 @@ def get_args():
         print("wait for debugger")
         debugpy.wait_for_client()
         print("attached")
-    enable_logging = not args.no_log
     config_path = args.config_path
     with open(config_path, "r") as f:
         args = json.load(f)
@@ -33,7 +32,7 @@ def get_args():
         args.shuffle = False 
     if "use_counter" not in args:
         args.use_counter = True
-    args.enable_logging = enable_logging
+    args.enable_logging = not args.no_log
     return args
 
 def main():
@@ -76,7 +75,6 @@ def main():
         samples = min(len(data), args.sample)
         data = data.select(range(samples))
    
-    # 根据 method 选择不同的生成策略
     if args.method == "non-retrieval":
         model = BasicRAG(args)
     elif args.method == "single-retrieval":
