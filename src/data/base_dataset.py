@@ -14,7 +14,7 @@ class BaseDataset:
     @classmethod
     def normalize_answer(cls, s):
         def remove_articles(text):
-            return re.sub(r'\b(a|an|the)\b', ' ', text)
+            return re.sub(r'\b(a|an|the)\b', '', text)
         def white_space_fix(text):
             return ' '.join(text.split())
         def remove_punc(text):
@@ -106,4 +106,13 @@ class BaseDataset:
         self.dataset = self.dataset.map(_format_for_dataset)
     
     def get_real_prediction(self, pred):
+        answer_prompts = ["the answer is"]
+        for prmt in answer_prompts:
+            if prmt in pred:
+                beg = pred.find(prmt) + len(prmt) + 1
+                pred = pred[beg:] # delete final "."
+                for stop_word in ["</s>", "<|endoftext|>", "\n", "."]:
+                    if pred.endswith(stop_word):
+                        pred = pred[:len(pred) - len(stop_word)]
+                return pred
         return pred

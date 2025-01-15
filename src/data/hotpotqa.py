@@ -89,19 +89,3 @@ class HotpotQA(BaseDataset):
                     # 'ctxs': context,
                 })
         self.dataset = Dataset.from_list(dataset)
-
-    def get_real_prediction(self, pred):
-        answer_prompts = ["the answer is"]
-        for prmt in answer_prompts:
-            if prmt in pred:
-                beg = pred.find(prmt) + len(prmt) + 1
-                pred = pred[beg:] # delete final "."
-                if pred.endswith("</s>"):
-                    pred = pred[:len(pred) - len("</s>")]
-                if pred.endswith("<|endoftext|>"):
-                    pred = pred[:len(pred) - len("<|endoftext|>")]
-                if pred.endswith("."):
-                    pred = pred[:-1]
-                return pred
-        else:
-            return ""

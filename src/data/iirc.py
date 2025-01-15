@@ -144,16 +144,3 @@ class IIRC(BaseDataset):
                         # 'ctxs': context,
                     })
         self.dataset = Dataset.from_list(dataset)
-
-    def get_real_prediction(self, pred):
-        answer_prompts = ["the answer is"]
-        for prmt in answer_prompts:
-            if prmt in pred:
-                beg = pred.find(prmt) + len(prmt) + 1
-                pred = pred[beg:] # delete final "."
-                for stop_word in ["</s>", "<|endoftext|>", "\n", "."]:
-                    if pred.endswith(stop_word):
-                        pred = pred[:len(pred) - len(stop_word)]
-                return pred
-        else:
-            return ""
