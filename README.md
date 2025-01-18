@@ -1,5 +1,15 @@
 # DRAGIN
 
+**📢 January 18, 2025 Update, Important: **
+
+We have observed significant performance differences in recently released LLMs (e.g., Qwen 2.5 series) **when using their official chat templates versus without them.**
+
+If you wish to reproduce results using the code in this repository for new LLMs, **make sure to apply the official chat template provided on the LLM’s Hugging Face page rather than the default chat template from this repository.** Otherwise, the experimental results may be inaccurate.
+
+
+
+
+
 **📢 News: this work has been accepted at the ACL 2024 main conference!**
 
 **If you find our project interesting or helpful, we would appreciate it if you could give us a star! Your support is a tremendous encouragement to us!**
