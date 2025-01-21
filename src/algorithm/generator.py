@@ -3,6 +3,7 @@ import logging
 import torch
 from scipy.special import softmax
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
+from .utils import Counter
 
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__)
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 class BasicGenerator:
     def __init__(self, model_name_or_path):
         logger.info(f"Loading model from {model_name_or_path}")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, padding_side='left')
         self.model_config = AutoConfig.from_pretrained(model_name_or_path,
                     trust_remote_code = "falcon" in model_name_or_path)
         self.model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="auto",
@@ -24,14 +25,13 @@ class BasicGenerator:
         
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
+        
+        self.counter = Counter()
 
     def generate(self, input_text, max_length, return_logprobs=False, num_return_sequences=1, return_entropies=False, temperature=1.0):
-        input_ids = self.tokenizer.encode(input_text, return_tensors="pt")
-        input_ids = input_ids.to(self.model.device)
-        input_length = input_ids.shape[1]
-        attention_mask = torch.ones_like(input_ids)
-
-        return_dict = {}
+        input = self.tokenizer(input_text, return_tensors="pt", padding=True)
+        input = input.to(self.model.device)
+        return_dict = dict()
         
         if return_logprobs:
             outputs = self.model.generate(
@@ -76,15 +76,16 @@ class BasicGenerator:
         
         else:
             outputs = self.model.generate(
-                input_ids = input_ids, 
+                input_ids = input['input_ids'], 
                 max_new_tokens = max_length, 
-                attention_mask = attention_mask,
+                attention_mask = input['attention_mask'],
             )
+            input_length = input['input_ids'].shape[-1]
             generated_tokens = outputs[:, input_length:]
-            text = self.tokenizer.decode(generated_tokens[0])
-            tokens = [self.tokenizer.decode(t) for t in generated_tokens[0]]
-            return_dict['text'] = text
-            return_dict['tokens'] = tokens
+            texts = self.tokenizer.batch_decode(generated_tokens)
+            # tokens_cnts = [tokens.shape[-1] - input_length for tokens in generated_tokens]
+            # self.counter.add_generate(texts, tokens_cnts)
+            return_dict['text'] = texts
         
         return return_dict
     

@@ -61,7 +61,9 @@ class BasicRAG:
         assert self.query_formulation == "direct"
         prompt = "".join([d["case"]+"\n" for d in demo])
         prompt += case
-        text, tokens, _ = self.generator.generate(prompt, self.generate_max_length)
+        return_dict = self.generator.generate(prompt, self.generate_max_length)
+        text = return_dict['text']
+        tokens = return_dict['tokens']
         if self.use_counter == True:
             self.counter.add_generate(text, tokens)
         return text
