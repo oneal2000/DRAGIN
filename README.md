@@ -1,5 +1,13 @@
 # DRAGIN
 
+**📢 January 18, 2025 Update, Important:**
+
+We have observed significant performance differences in recently released LLMs (e.g., Qwen 2.5 series) **when using their official chat templates versus without them.** If you wish to reproduce results using the code in this repository for new LLMs, **make sure to apply the official chat template provided on the LLM’s Hugging Face page rather than the default chat template from this repository.** Otherwise, the experimental results may be inaccurate.
+
+
+
+
+
 **📢 News: this work has been accepted at the ACL 2024 main conference!**
 
 **If you find our project interesting or helpful, we would appreciate it if you could give us a star! Your support is a tremendous encouragement to us!**
@@ -105,7 +113,7 @@ The parameters that can be selected in the config file `config.json` are as foll
 | parameter                 | meaning                                                      | example/options                                              |
 | ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | `model_name_or_path`      | Hugging Face model.                                          | `meta-llama/Llama-2-13b-chat`                             |
-| `method`                  | way to generate answers             | `non-retrieval`, `single-retrieval`, `token`, `fix-sentence-retrieval`, `fix-length-retrieval`, `attn_entropy` |
+| `method`                  | way to generate answers             | `non-retrieval`, `single-retrieval`, `token`, `fix-sentence-retrieval`, `fix-length-retrieval`, `dragin` |
 | `dataset`                 | Dataset                                                      | `2wikimultihopqa`, `hotpotqa`, `iirc`, `strategyqa`          |
 | `data_path`               | the folder where the data is located. If you use the above code to download the data, the folder will be `../data/dataset`. | `../data/2wikimultihopqa`                                    |
 | `fewshot`                 | Few shot.                                                    | 6                                                            |
