@@ -95,7 +95,7 @@ def main():
 
     logger.info("start inference")
     for batch in tqdm(batchify(data, args.batch_size)):
-        last_counter = copy(model.generator.counter)
+        # last_counter = copy(model.generator.counter)
         preds = model.inference(batch["question"], batch["demo"], batch["case"])
         preds = [pred.strip() for pred in preds]
         qids = batch['qid']

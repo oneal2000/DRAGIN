@@ -56,16 +56,15 @@ class BasicRAG:
         sentences = [sent for sent in sentences if len(sent) > 0]
         return sentences[-1] if len(sentences) > 0 else "" 
     
-    def inference(self, question, demo, case):
+    def inference(self, questions, demos, cases):
         # non-retrieval
         assert self.query_formulation == "direct"
-        prompt = "".join([d["case"]+"\n" for d in demo])
-        prompt += case
-        return_dict = self.generator.generate(prompt, self.generate_max_length)
+        prompts = ["".join([d["case"]+"\n" for d in demo]) + case for demo, case in zip(demos, cases)]
+        return_dict = self.generator.generate(prompts, self.generate_max_length)
         text = return_dict['text']
-        tokens = return_dict['tokens']
-        if self.use_counter == True:
-            self.counter.add_generate(text, tokens)
+        # tokens = return_dict['tokens']
+        # if self.use_counter == True:
+        #     self.counter.add_generate(text, tokens)
         return text
 
     def extract_sentence_token_positions(self, text, tokens):
