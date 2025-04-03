@@ -1,4 +1,4 @@
-transformers==4.30.2
+transformers==4.43.1
 beir
 datasets==2.14.1
 tqdm
@@ -7,3 +7,5 @@ evaluate==0.2.2
 spacy==3.7.2
 accelerate
 elasticsearch==7.17.9
+torch==2.1.1
+debugpy

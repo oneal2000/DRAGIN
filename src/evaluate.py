@@ -15,14 +15,7 @@ logger = logging.getLogger(__name__)
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", type=str, required=True)
-    parser.add_argument("--debug", action='store_true', help="Enable debug mode")
     tmp = parser.parse_args()
-    if tmp.debug:
-        import debugpy
-        debugpy.listen(5679)
-        print("wait for debugger")
-        debugpy.wait_for_client()
-        print("attached")
     with open(os.path.join(tmp.dir, "config.json"), "r") as f:
         args = json.load(f)
     args = argparse.Namespace(**args)
@@ -33,7 +26,7 @@ def get_args():
 def regenerate_answer(cot, tokenizer, model, case, demo):
     # print("##### origin #####")
     # print(cot)
-    split_words = ["Question:", "#10000000", "Note:"]
+    split_words = ["\nQuestion:", "#10000000", "Note:"]
     # split_words = ["Question:", "#10000000", "\n"]
     for word in split_words:
         pos = cot.find(word)
@@ -95,21 +88,21 @@ def main():
         ]
 
     metrics = ["EM", "F1", "Precision", "Recall"]
-    if "use_counter" not in args or args.use_counter:
-        count_list = ["retrieve_count", "generate_count", "hallucinated_count", "token_count", "sentence_count"]
-        metrics += count_list
+    # if "use_counter" not in args or args.use_counter:
+    #     count_list = ["retrieve_count", "generate_count", "hallucinated_count", "token_count", "sentence_count"]
+    #     metrics += count_list
     value = [[] for _ in range(len(metrics))]
-    with open(os.path.join(args.output_dir, "output.txt"), "r") as fin:
+    with open(os.path.join(args.output_dir, "output.jsonl"), "r") as fin:
         lines = fin.readlines()
     
     need_generate = args.dataset in ['2wikimultihopqa', "hotpotqa", "iirc", "strategyqa"] 
     if need_generate:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
-        model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, device_map="auto",
-                                                     trust_remote_code = "falcon" in args.model_name_or_path)
+        tokenizer = AutoTokenizer.from_pretrained(args.model)
+        model = AutoModelForCausalLM.from_pretrained(args.model, device_map="auto",
+                                                     trust_remote_code = "falcon" in args.model)
         demo = data.dataset[0]["demo"]
 
-    pred_out = open(f"{args.output_dir}/details.txt", "w")
+    pred_out = open(f"{args.output_dir}/details.jsonl", "w")
     
     for line in tqdm(lines):
         rd = json.loads(line)
@@ -134,18 +127,18 @@ def main():
         value[0].append(em_ret["correct"])
         for i, k in enumerate(f1_ret.keys()):
             value[i+1].append(f1_ret[k])
-        if "use_counter" not in args or args.use_counter:
-            for i, k in enumerate(count_list):
-                value[i+4].append(rd[k])
+        # if "use_counter" not in args or args.use_counter:
+        #     for i, k in enumerate(count_list):
+        #         value[i+4].append(rd[k])
         detail = {
-            "qid": qid,
             "ground_truth": ground_truth,
             "final_pred": pred,
             "EM": str(em_ret["correct"]), 
             "F1": str(f1_ret["f1"]),
-            "question": question
+            "question": question,
+            "qid": qid
         }
-        pred_out.write(json.dumps(detail)+"\n")
+        pred_out.write(json.dumps(detail, ensure_ascii=False)+"\n")
 
     ret = []
     for i, metric in enumerate(metrics):

@@ -7,7 +7,7 @@ class BasicRAG:
         args = args.__dict__ 
         for k, v in args.items():
             setattr(self, k, v)
-        self.generator = BasicGenerator(self.model_name_or_path)
+        self.generator = BasicGenerator(self.model)
         if "retriever" in self.__dict__:
             self.retriever_type = self.retriever
             if self.retriever_type == "BM25":
@@ -19,7 +19,7 @@ class BasicRAG:
                 )
             elif self.retriever_type == "SGPT":
                 self.retriever = SGPT(
-                    model_name_or_path = self.sgpt_model_name_or_path, 
+                    model = self.sgpt_model, 
                     sgpt_encode_file_path = self.sgpt_encode_file_path,
                     passage_file = self.passage_file
                 )
@@ -56,14 +56,12 @@ class BasicRAG:
         sentences = [sent for sent in sentences if len(sent) > 0]
         return sentences[-1] if len(sentences) > 0 else "" 
     
-    def inference(self, question, demo, case):
+    def inference(self, questions, demos, cases):
         # non-retrieval
         assert self.query_formulation == "direct"
-        prompt = "".join([d["case"]+"\n" for d in demo])
-        prompt += case
-        text, tokens, _ = self.generator.generate(prompt, self.generate_max_length)
-        if self.use_counter == True:
-            self.counter.add_generate(text, tokens)
+        prompts = ["".join([d["case"]+"\n" for d in demo]) + case for demo, case in zip(demos, cases)]
+        return_dict = self.generator.generate(prompts, self.generate_max_length)
+        text = return_dict['text']
         return text
 
     def extract_sentence_token_positions(self, text, tokens):

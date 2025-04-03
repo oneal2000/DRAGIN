@@ -6,6 +6,7 @@ from copy import copy
 import logging
 from data import *
 from algorithm import *
+from utils import *
 
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__)
@@ -14,32 +15,23 @@ logger = logging.getLogger(__name__)
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config_path", type=str, required=True)
-    parser.add_argument("--debug", action='store_true', help="Enable debug mode")
-    parser.add_argument("--no_log", action='store_true', help="Disable logging mode")
+    parser.add_argument("--disable_logging", action='store_true', help="Disable logging mode")
+    parser.add_argument("--batch_size", type=int, default=64)
     args = parser.parse_args()
-    if args.debug:
-        import debugpy
-        debugpy.listen(5679)
-        print("wait for debugger")
-        debugpy.wait_for_client()
-        print("attached")
-    config_path = args.config_path
-    with open(config_path, "r") as f:
-        args = json.load(f)
-    args = argparse.Namespace(**args)
-    args.config_path = config_path
+    with open(args.config_path, "r") as f:
+        for k, v in json.load(f).items():
+            setattr(args, k, v)
     if "shuffle" not in args:
         args.shuffle = False 
     if "use_counter" not in args:
         args.use_counter = True
-    args.enable_logging = not args.no_log
     return args
 
 def main():
     args = get_args()
     logger.info(f"{args}")
 
-    if args.enable_logging:
+    if not args.disable_logging:
         # output dir
         if os.path.exists(args.output_dir) is False:
             os.makedirs(args.output_dir)
@@ -54,7 +46,7 @@ def main():
         with open(os.path.join(args.output_dir, "config.json"), "w") as f:
             json.dump(args.__dict__, f, indent=4)
         # create output file
-        output_file = open(os.path.join(args.output_dir, "output.txt"), "w")
+        output_file = open(os.path.join(args.output_dir, "output.jsonl"), "w")
 
     # load data
     if args.dataset == "strategyqa":
@@ -95,22 +87,20 @@ def main():
         model = DynamicThresholdingRAG(args)
 
     logger.info("start inference")
-    # DEBUG: for analysis token's confidence
-    # token_prob_file = open(os.path.join(args.output_dir, "token_scores.txt"), "w")
-    # End of DEBUGGGG
-    for i in tqdm(range(len(data))):
-        last_counter = copy(model.counter)
-        batch = data[i]
-        pred = model.inference(batch["question"], batch["demo"], batch["case"])
-        pred = pred.strip()
-        ret = {
-            "qid": batch["qid"], 
+    for batch in tqdm(batchify(data, args.batch_size)):
+        # last_counter = copy(model.generator.counter)
+        preds = model.inference(batch["question"], batch["demo"], batch["case"])
+        preds = [pred.strip() for pred in preds]
+        qids = batch['qid']
+        rets = [{
+            "qid": qid, 
             "prediction": pred,
-        }
-        if args.use_counter:
-            ret.update(model.counter.calc(last_counter))
-        if args.enable_logging:
-            output_file.write(json.dumps(ret)+"\n")
+        } for qid, pred in zip(qids, preds)]
+        # if args.use_counter:
+        #     rets.update(model.generator.counter.calc(last_counter))
+        if not args.disable_logging:
+            ret_lines = '\n'.join(json.dumps(ret) for ret in rets)
+            output_file.write(ret_lines+"\n")
     
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ import tqdm
 import uuid
 import numpy as np
 import torch
-import faiss
 import logging
 import pandas as pd
 from transformers import AutoTokenizer, AutoModel
@@ -197,13 +196,13 @@ class SGPT:
 
     def __init__(
         self, 
-        model_name_or_path,
+        model,
         sgpt_encode_file_path,
         passage_file
     ):
-        logger.info(f"Loading SGPT model from {model_name_or_path}")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-        self.model = AutoModel.from_pretrained(model_name_or_path, device_map="auto")
+        logger.info(f"Loading SGPT model from {model}")
+        self.tokenizer = AutoTokenizer.from_pretrained(model)
+        self.model = AutoModel.from_pretrained(model, device_map="auto")
         self.model.eval()
         self.SPECB_QUE_BOS = self.tokenizer.encode("[", add_special_tokens=False)[0]
         self.SPECB_QUE_EOS = self.tokenizer.encode("]", add_special_tokens=False)[0]
