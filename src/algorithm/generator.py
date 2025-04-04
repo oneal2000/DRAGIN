@@ -28,61 +28,51 @@ class BasicGenerator:
         
         self.counter = Counter()
 
-    def generate(self, input_text, max_length, return_logprobs=False, num_return_sequences=1, return_entropies=False, temperature=1.0):
+    def generate(self, input_text, max_length, return_logprobs=True, num_return_sequences=1, return_entropies=True, temperature=1.0):
         input = self.tokenizer(input_text, return_tensors="pt", padding=True)
         input = input.to(self.model.device)
         return_dict = dict()
         
+        outputs = self.model.generate(
+            input_ids = input['input_ids'], 
+            attention_mask = input['attention_mask'],
+            max_new_tokens = max_length, 
+            num_return_sequences = num_return_sequences,
+            return_dict_in_generate = True, 
+            output_scores = True,
+            temperature=temperature
+        )
+        input_length = input['input_ids'].shape[-1]
+        generated_tokens = outputs.sequences[:, input_length:]
+        texts = self.tokenizer.batch_decode(generated_tokens)
+        # generate output_scores shape: tuple of tensor -> (max_length, batch_size, vocab_size)
         if return_logprobs:
-            outputs = self.model.generate(
-                input_ids = input_ids, 
-                attention_mask = attention_mask,
-                max_new_tokens = max_length, 
-                num_return_sequences = num_return_sequences,
-                return_dict_in_generate = True, 
-                output_scores = True,
-                temperature=temperature
-            )
             transition_scores = self.model.compute_transition_scores(
                 outputs.sequences, outputs.scores, normalize_logits=True
             )
-
-            generated_tokens = outputs.sequences[:, input_length:]
             if num_return_sequences == 1:
-                text = self.tokenizer.decode(generated_tokens[0]) # text = "".join(tokens)
-                tokens = [self.tokenizer.decode(t) for t in generated_tokens[0]]
-                logprobs = transition_scores[0]
-                logprobs = [p.cpu().numpy() for p in logprobs]
+                # text = self.tokenizer.decode(generated_tokens[0]) # text = "".join(tokens)
+                tokens = [[self.tokenizer.decode(t) for t in each_generated_tokens] for each_generated_tokens in generated_tokens]
+                logprobs = [[p.cpu().numpy().item() for p in logprobs] for logprobs in transition_scores]
                 assert len(tokens) == len(logprobs)
             else:
-                text = [self.tokenizer.decode(generated_tokens[i]) for i in range(num_return_sequences)]
                 tokens = [[self.tokenizer.decode(t) for t in generated_tokens[i]] for i in range(num_return_sequences)]
                 logprobs = [transition_scores[i] for i in range(num_return_sequences)]
-                logprobs = [[p.cpu().numpy() for p in row] for row in logprobs]
-            # DEBUGGG: for entropy
+                logprobs = [[p.cpu().numpy().item() for p in row] for row in logprobs]
             if return_entropies:
                 tmp = []
                 for v in outputs.scores:
                     tmp.append(v.cpu())
                 softmax_probs = softmax(tmp, axis=-1)
                 entropies = -np.sum(softmax_probs * np.log(softmax_probs + 1e-10), axis=-1)
-                seqentropies = [v[0] for v in entropies]
-                return_dict['entropies'] = seqentropies
-                # END OF DEBUGGGGGGG
+                # seqentropies = [v[0] for v in entropies]
+                return_dict['entropies'] = entropies.T.tolist()
 
-            return_dict['text'] = text
+            return_dict['text'] = texts
             return_dict['tokens'] = tokens
             return_dict['logprobs'] = logprobs
         
         else:
-            outputs = self.model.generate(
-                input_ids = input['input_ids'], 
-                max_new_tokens = max_length, 
-                attention_mask = input['attention_mask'],
-            )
-            input_length = input['input_ids'].shape[-1]
-            generated_tokens = outputs[:, input_length:]
-            texts = self.tokenizer.batch_decode(generated_tokens)
             # tokens_cnts = [tokens.shape[-1] - input_length for tokens in generated_tokens]
             # self.counter.add_generate(texts, tokens_cnts)
             return_dict['text'] = texts

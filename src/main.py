@@ -10,21 +10,24 @@ from utils import *
 
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__)
+CONFIG_PATH = "../config/config.json"
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config_path", type=str, required=True)
     parser.add_argument("--disable_logging", action='store_true', help="Disable logging mode")
-    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--note", type=str)
     args = parser.parse_args()
-    with open(args.config_path, "r") as f:
+    with open(CONFIG_PATH, "r") as f:
         for k, v in json.load(f).items():
             setattr(args, k, v)
     if "shuffle" not in args:
         args.shuffle = False 
     if "use_counter" not in args:
         args.use_counter = True
+    model_name = args.model[args.model.rfind("/") + 1:]
+    args.output_dir = f"../results/{model_name}/{args.dataset}/{args.method}"
     return args
 
 def main():
@@ -46,7 +49,8 @@ def main():
         with open(os.path.join(args.output_dir, "config.json"), "w") as f:
             json.dump(args.__dict__, f, indent=4)
         # create output file
-        output_file = open(os.path.join(args.output_dir, "output.jsonl"), "w")
+        output_file_name = os.path.join(args.output_dir, "output.jsonl")
+        output_file = open(output_file_name, "w")
 
     # load data
     if args.dataset == "strategyqa":
@@ -89,18 +93,37 @@ def main():
     logger.info("start inference")
     for batch in tqdm(batchify(data, args.batch_size)):
         # last_counter = copy(model.generator.counter)
-        preds = model.inference(batch["question"], batch["demo"], batch["case"])
+        inference_results = model.inference(batch["question"], batch["demo"], batch["case"])
+        preds = inference_results['text']
         preds = [pred.strip() for pred in preds]
         qids = batch['qid']
-        rets = [{
-            "qid": qid, 
-            "prediction": pred,
-        } for qid, pred in zip(qids, preds)]
+        token_uncertainty = inference_results.get('token_uncertainty', [None] * len(preds))
+
+        rets = [
+            {
+                "qid": qid,
+                "prediction": pred,
+                **({"token_uncertainty": uncertainty} if uncertainty is not None else {})
+            }
+            for qid, pred, uncertainty in zip(qids, preds, token_uncertainty)
+        ]
         # if args.use_counter:
         #     rets.update(model.generator.counter.calc(last_counter))
         if not args.disable_logging:
             ret_lines = '\n'.join(json.dumps(ret) for ret in rets)
             output_file.write(ret_lines+"\n")
+            
+    if not args.disable_logging:
+        output_file.close()
+        # Reopen the jsonl file, read and convert to a list of dicts
+        json_path = output_file_name.rsplit(".", 1)[0] + ".json"
+
+        with open(output_file_name, "r", encoding="utf-8") as infile:
+            json_list = [json.loads(line) for line in infile]
+
+        # Write the list of dicts into a new .json file with indentation
+        with open(json_path, "w", encoding="utf-8") as outfile:
+            json.dump(json_list, outfile, ensure_ascii=False, indent=2)
     
 
 if __name__ == "__main__":

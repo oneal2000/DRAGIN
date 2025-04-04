@@ -56,13 +56,18 @@ class BasicRAG:
         sentences = [sent for sent in sentences if len(sent) > 0]
         return sentences[-1] if len(sentences) > 0 else "" 
     
-    def inference(self, questions, demos, cases):
+    def inference(self, questions, demos, cases, view_uncertainty=True):
         # non-retrieval
         assert self.query_formulation == "direct"
         prompts = ["".join([d["case"]+"\n" for d in demo]) + case for demo, case in zip(demos, cases)]
         return_dict = self.generator.generate(prompts, self.generate_max_length)
         text = return_dict['text']
-        return text
+        # token_uncertainty = list(zip(return_dict['tokens'], return_dict['entropies'], return_dict['logprobs']))
+        inference_results = dict(text=text)
+        if view_uncertainty:
+            token_uncertainty = list(zip(return_dict['tokens'], return_dict['entropies'], return_dict['logprobs']))
+            inference_results['token_uncertainty'] = token_uncertainty
+        return inference_results
 
     def extract_sentence_token_positions(self, text, tokens):
         sentences = [sent.text.strip() for sent in nlp(text).sents]

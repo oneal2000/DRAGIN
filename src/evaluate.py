@@ -26,7 +26,9 @@ def get_args():
 def regenerate_answer(cot, tokenizer, model, case, demo):
     # print("##### origin #####")
     # print(cot)
-    split_words = ["\nQuestion:", "#10000000", "Note:"]
+    split_words = ["\nQuestion:", "#10000000", "Note:"] + [tokenizer.eos_token]
+    if tokenizer.pad_token:
+        split_words.append(tokenizer.pad_token)
     # split_words = ["Question:", "#10000000", "\n"]
     for word in split_words:
         pos = cot.find(word)
