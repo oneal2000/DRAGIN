@@ -1,0 +1,13 @@
+{
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "method": "non-retrieval",
+    "dataset": "2wikimultihopqa",
+    "data_path": "../data/2wikimultihopqa",
+    "fewshot": 6,
+    "sample": 150,
+    "shuffle": false,
+    "generate_max_length": 100,
+    "query_formulation": "direct",
+    "es_index_name": "wiki",
+    "use_counter": true
+}
