@@ -65,7 +65,7 @@ class BasicRAG:
         # token_uncertainty = list(zip(return_dict['tokens'], return_dict['entropies'], return_dict['logprobs']))
         inference_results = dict(text=text)
         if view_uncertainty:
-            token_uncertainty = list(zip(return_dict['tokens'], return_dict['entropies'], return_dict['logprobs']))
+            token_uncertainty = [list(zip(tokens, entropies, logprobs)) for tokens, entropies, logprobs in zip(return_dict['tokens'], return_dict['entropies'], return_dict['logprobs'])]
             inference_results['token_uncertainty'] = token_uncertainty
         return inference_results
 
