@@ -50,8 +50,14 @@ def build_elasticsearch(
                     }
                     yield es_doc
 
+    # Calculate the total number of documents
+    total_docs = 0
+    for beir_corpus_file in beir_corpus_files:
+        with open(beir_corpus_file, 'r') as fin:
+            total_docs += sum(1 for _ in fin) - 1
+
     # index
-    progress = tqdm(unit='docs')
+    progress = tqdm(unit='docs', total=total_docs, desc='Indexing documents')
     es.bulk_add_to_index(
         generate_actions=generate_actions(),
         progress=progress)
