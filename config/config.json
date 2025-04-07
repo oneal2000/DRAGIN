@@ -1,9 +1,10 @@
 {
     "model": "meta-llama/Llama-3.1-8B-Instruct",
-    "method": "single-retrieval",
+    "method": "fix-length-retrieval",
     "dataset": "2wikimultihopqa",
     "data_path": "../data/2wikimultihopqa",
     "fewshot": 6,
+    "fix_length": 25,
     "sample": 150,
     "shuffle": false,
     "generate_max_length": 100,

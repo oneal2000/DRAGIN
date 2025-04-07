@@ -1,7 +1,7 @@
 from .base_rag import BasicRAG
 from .utils import nlp
 
-class FixLengthRAG(BasicRAG):
+class FixSentenceRAG(BasicRAG):
     def __init__(self, args):
         super().__init__(args)
     

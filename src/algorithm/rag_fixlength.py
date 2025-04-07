@@ -5,28 +5,52 @@ class FixLengthRAG(BasicRAG):
     def __init__(self, args):
         super().__init__(args)
     
-    def inference(self, question, demo, case):
+    def inference(self, questions, demos, cases):
         assert self.query_formulation == "direct"
-        text = ""
-        retrieve_question = question
+        texts = [""] * len(questions)
+        retrieve_questions = questions
+        generatings = [True] * len(questions)
         while True:
-            old_len = len(text)
-            docs = self.retrieve(retrieve_question, topk=self.retrieve_topk)
-            prompt = "".join([d["case"]+"\n" for d in demo])
-            prompt += "Context:\n"
-            for i, doc in enumerate(docs):
-                prompt += f"[{i+1}] {doc}\n"
-            prompt += "Answer in t he same format as before.\n"
-            prompt += case + " " + text
+            old_len = [len(text) for text in texts]
+            docs = self.retrieve(retrieve_questions, topk=self.retrieve_topk)
+        # 对 topk 个 passage 生成 prompt
+            prompts = []
+            doc_id = 0
+            for generating, text, demo, case in zip(generatings, texts, demos, cases):
+                if not generating:
+                    continue
+                prompt = "".join([d["case"]+"\n" for d in demo])
+                prompt += "Context:\n"
+                for i, doc in enumerate(docs[doc_id]):
+                    prompt += f"[{i+1}] {doc}\n"
+                prompt += "Answer in the same format as before.\n"
+                prompt += case + " " + text
+                prompts.append(prompt)
+                doc_id += 1
 
-            new_text, tokens, _ = self.generator.generate(prompt, self.fix_length)
-            if self.use_counter == True:
-                self.counter.add_generate(new_text, tokens)
-            text = text.strip() + " " + new_text.strip()
-            retrieve_question = new_text.strip()
+            return_dict = self.generator.generate(prompts, self.fix_length)
+
+            new_texts = return_dict['text']
+            new_text_id = 0
+            for i in range(len(generatings)):
+                if not generatings[i]:
+                    continue
+                texts[i] = texts[i].strip() + " " + new_texts[new_text_id].strip()
+                new_text_id += 1
             
             # 判断 token 的个数要少于 generate_max_length 
-            tokens_count = len(self.generator.tokenizer.encode(text))
-            if tokens_count > self.generate_max_length or len(text) <= old_len or "the answer is" in text:
+            tokens_list = self.generator.tokenizer.batch_encode_plus(texts)['input_ids']
+            tokens_cnts = [len(tokens) - 1 for tokens in tokens_list]
+            new_text_id = 0
+            retrieve_questions = []
+            for i in range(len(generatings)):
+                if not generatings[i]:
+                    continue
+                if tokens_cnts[i] > self.generate_max_length or len(texts[i]) <= old_len[i] or "\nQuestion" in texts[i]:
+                    generatings[i] = False
+                else:
+                    retrieve_questions.append(new_texts[new_text_id].strip())
+                new_text_id += 1
+            if all(not generating for generating in generatings):
                 break
-        return text
+        return texts

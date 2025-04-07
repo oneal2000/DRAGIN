@@ -44,7 +44,7 @@ class BasicGenerator:
         )
         input_length = input['input_ids'].shape[-1]
         generated_tokens = outputs.sequences[:, input_length:]
-        texts = self.tokenizer.batch_decode(generated_tokens)
+        texts = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
         # generate output_scores shape: tuple of tensor -> (max_length, batch_size, vocab_size)
         if return_logprobs:
             transition_scores = self.model.compute_transition_scores(

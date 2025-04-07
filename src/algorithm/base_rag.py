@@ -30,19 +30,20 @@ class BasicRAG:
 
     def retrieve(self, query, topk=1, max_query_length=64):
         self.counter.retrieve += 1
+        queries = [query] if type(query) == str else query
         if self.retriever_type == "BM25":
             _docs_ids, docs = self.retriever.retrieve(
-                queries = [query], 
+                queries = queries, 
                 topk = topk, 
                 max_query_length = max_query_length,
             )
-            return docs[0]
+            return docs
         elif self.retriever_type == "SGPT":
             docs = self.retriever.retrieve(
-                queries = [query], 
+                queries = queries, 
                 topk = topk,
             )
-            return docs[0] 
+            return docs
         else:
             raise NotImplementedError
     
