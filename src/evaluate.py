@@ -26,7 +26,7 @@ def get_args():
 def regenerate_answer(cot, tokenizer, model, case, demo):
     # print("##### origin #####")
     # print(cot)
-    split_words = ["\nQuestion:", "#10000000", "Note:"] + [tokenizer.eos_token]
+    split_words = ["\nQuestion:", "#10000000", "Note:", ". Question:"] + [tokenizer.eos_token]
     if tokenizer.pad_token:
         split_words.append(tokenizer.pad_token)
     # split_words = ["Question:", "#10000000", "\n"]

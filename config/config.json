@@ -1,6 +1,6 @@
 {
     "model": "meta-llama/Llama-3.1-8B-Instruct",
-    "method": "single-retrieval",
+    "method": "fix-sentence-retrieval",
     "dataset": "2wikimultihopqa",
     "data_path": "../data/2wikimultihopqa",
     "fewshot": 6,

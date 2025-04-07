@@ -35,7 +35,7 @@ class FixLengthRAG(BasicRAG):
             for i in range(len(generatings)):
                 if not generatings[i]:
                     continue
-                texts[i] = texts[i].strip() + " " + new_texts[new_text_id].strip()
+                texts[i] = (texts[i].strip() + " " + new_texts[new_text_id].strip()).strip()
                 new_text_id += 1
             
             # 判断 token 的个数要少于 generate_max_length 

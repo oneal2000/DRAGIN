@@ -75,8 +75,10 @@ def main():
         model = BasicRAG(args)
     elif args.method == "single-retrieval":
         model = SingleRAG(args)
-    elif args.method == "fix-length-retrieval" or args.method == "fix-sentence-retrieval":
+    elif args.method == "fix-length-retrieval":
         model = FixLengthRAG(args)
+    elif args.method == "fix-sentence-retrieval":
+        model = FixSentenceRAG(args)
     elif args.method == "flare":
         model = FlareRAG(args)
     elif args.method == "attn_prob" or args.method == "dragin":
