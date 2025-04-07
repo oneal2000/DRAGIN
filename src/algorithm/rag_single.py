@@ -6,7 +6,7 @@ class SingleRAG(BasicRAG):
     
     def inference(self, questions, demos, cases, view_uncertainty=True):
         assert self.query_formulation == "direct"
-        docs = [self.retrieve(question, topk=self.retrieve_topk) for question in questions]
+        docs = self.retrieve(questions, topk=self.retrieve_topk)
         # 对 topk 个 passage 生成 prompt
         prompts = []
         for demo, case, doc in zip(demos, cases, docs):

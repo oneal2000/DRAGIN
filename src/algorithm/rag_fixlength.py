@@ -53,4 +53,5 @@ class FixLengthRAG(BasicRAG):
                 new_text_id += 1
             if all(not generating for generating in generatings):
                 break
-        return texts
+        inference_results = dict(text=texts)
+        return inference_results
