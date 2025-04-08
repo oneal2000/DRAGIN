@@ -46,10 +46,10 @@ def regenerate_answer(cots, tokenizer, model, cases, demos):
     processed_indices = []  # Track indices of processed CoTs
 
     for idx, cot in enumerate(cots):
+        cot = clean_generated_text(cot, split_words)
         if "the answer is" in cot:
             results.append(cot)  # Directly append to results
         else:
-            clean_generated_text(cot, split_words)
             processed_cots.append(cot + " So the answer is ")
             processed_indices.append(idx)  # Track the index of this CoT
 
@@ -127,8 +127,11 @@ def main():
     if need_generate:
         tokenizer = AutoTokenizer.from_pretrained(args.model)
         model = AutoModelForCausalLM.from_pretrained(args.model, device_map="auto",
-                                                     trust_remote_code = "falcon" in args.model)
+                                                     trust_remote_code="falcon" in args.model)
         demo = data.dataset[0]["demo"]
+
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
 
     pred_out = open(f"{args.output_dir}/details.jsonl", "w")
 
