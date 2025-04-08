@@ -1,13 +1,14 @@
-import os
-import json
 import argparse
+import json
 import logging
-import torch
+import os
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from data import StrategyQA, WikiMultiHopQA, HotpotQA, IIRC
-from transformers import AutoTokenizer, AutoModelForCausalLM 
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from data import IIRC, HotpotQA, StrategyQA, WikiMultiHopQA
 
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__)
@@ -23,44 +24,64 @@ def get_args():
     return args
 
 
-def regenerate_answer(cot, tokenizer, model, case, demo):
-    # print("##### origin #####")
-    # print(cot)
+def regenerate_answer(cots, tokenizer, model, cases, demos):
     split_words = ["\nQuestion:", "#10000000", "Note:", ". Question:"] + [tokenizer.eos_token]
     if tokenizer.pad_token:
         split_words.append(tokenizer.pad_token)
-    # split_words = ["Question:", "#10000000", "\n"]
-    for word in split_words:
-        pos = cot.find(word)
-        if pos != -1 and pos > 0:
-            cot = cot[:pos]
-    if "the answer is" in cot:
-        return cot 
+    
+    results = [] 
+    processed_cots = []
+    processed_indices = []  # Track indices of processed CoTs
 
-    cot += " So the answer is "
-    prompt = "".join([d["case"]+"\n" for d in demo])
-    prompt += case + " " + cot
-    input_ids = tokenizer.encode(prompt, return_tensors="pt")
-    input_ids = input_ids.to(model.device)
-    input_length = input_ids.shape[1]
-    attention_mask = torch.ones_like(input_ids)
-    outputs = model.generate(
-        input_ids = input_ids, 
-        attention_mask = attention_mask, 
-        max_new_tokens = 20)
-    generated_tokens = outputs[:, input_length:]
-    text = tokenizer.decode(generated_tokens[0])
-    text = cot + text.strip()
-    for word in split_words:
-        pos = text.find(word)
-        if pos != -1:
-            text = text[:pos] 
-    # print("##### prompt #####")
-    # print(prompt)
-    # print("##### output #####")
-    # print(text)
-    # print("##### pred #####")
-    return text
+    for idx, cot in enumerate(cots):
+        if "the answer is" in cot:
+            results.append(cot)  # Directly append to results
+        else:
+            for word in split_words:
+                pos = cot.find(word)
+                if pos != -1 and pos > 0:
+                    cot = cot[:pos]
+            processed_cots.append(cot + " So the answer is ")
+            processed_indices.append(idx)  # Track the index of this CoT
+
+    # Generate predictions only for processed CoTs
+    if processed_cots:
+        prompts = []
+        for case, cot, demo in zip(cases, processed_cots, demos):
+            prompt = "".join([d["case"] + "\n" for d in demo])
+            prompt += case + " " + cot
+            prompts.append(prompt)
+
+        inputs = tokenizer(prompts, return_tensors="pt", padding=True, truncation=True)
+        inputs = inputs.to(model.device)
+        input_lengths = inputs["input_ids"].shape[1]
+        outputs = model.generate(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"],
+            max_new_tokens=20
+        )
+        generated_tokens = outputs[:, input_lengths:]
+        texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+
+        for cot, text in zip(processed_cots, texts):
+            text = cot + text.strip()
+            for word in split_words:
+                pos = text.find(word)
+                if pos != -1:
+                    text = text[:pos]
+            results.append(text)
+
+    # Reorder results to match the original order of `cots`
+    final_results = [None] * len(cots)
+    result_idx = 0
+    for idx in range(len(cots)):
+        if idx in processed_indices:
+            final_results[idx] = results[result_idx]
+            result_idx += 1
+        else:
+            final_results[idx] = results.pop(0)
+
+    return final_results
 
 
 def main():
@@ -112,7 +133,7 @@ def main():
         pred = rd["prediction"]
         question, ground_truth, ground_truth_id, case = dataset[qid]
         if need_generate:
-            pred = regenerate_answer(pred, tokenizer, model, case, demo) 
+            pred = regenerate_answer([pred], tokenizer, model, [case], [demo])[0] 
         pred = data.get_real_prediction(pred)
         # print("*****", pred)
 
