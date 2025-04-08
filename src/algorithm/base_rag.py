@@ -29,6 +29,7 @@ class BasicRAG:
         self.counter = Counter()
 
     def retrieve(self, query, topk=1, max_query_length=64):
+        if query is None: return None
         self.counter.retrieve += 1
         queries = [query] if type(query) == str else query
         if self.retriever_type == "BM25":
