@@ -9,6 +9,7 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from data import IIRC, HotpotQA, StrategyQA, WikiMultiHopQA
+from utils import batchify
 
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,17 @@ def get_args():
     return args
 
 
+def clean_generated_text(text, split_words):
+    """
+    Cleans and truncates the generated text based on split words.
+    """
+    for word in split_words:
+        pos = text.find(word)
+        if pos != -1:
+            text = text[:pos]
+    return text
+
+
 def regenerate_answer(cots, tokenizer, model, cases, demos):
     split_words = ["\nQuestion:", "#10000000", "Note:", ". Question:"] + [tokenizer.eos_token]
     if tokenizer.pad_token:
@@ -37,10 +49,7 @@ def regenerate_answer(cots, tokenizer, model, cases, demos):
         if "the answer is" in cot:
             results.append(cot)  # Directly append to results
         else:
-            for word in split_words:
-                pos = cot.find(word)
-                if pos != -1 and pos > 0:
-                    cot = cot[:pos]
+            clean_generated_text(cot, split_words)
             processed_cots.append(cot + " So the answer is ")
             processed_indices.append(idx)  # Track the index of this CoT
 
@@ -65,11 +74,7 @@ def regenerate_answer(cots, tokenizer, model, cases, demos):
 
         for cot, text in zip(processed_cots, texts):
             text = cot + text.strip()
-            for word in split_words:
-                pos = text.find(word)
-                if pos != -1:
-                    text = text[:pos]
-            results.append(text)
+            results.append(clean_generated_text(text, split_words))
 
     # Reorder results to match the original order of `cots`
     final_results = [None] * len(cots)
@@ -126,42 +131,40 @@ def main():
         demo = data.dataset[0]["demo"]
 
     pred_out = open(f"{args.output_dir}/details.jsonl", "w")
-    
-    for line in tqdm(lines):
-        rd = json.loads(line)
-        qid = rd["qid"]
-        pred = rd["prediction"]
-        question, ground_truth, ground_truth_id, case = dataset[qid]
-        if need_generate:
-            pred = regenerate_answer([pred], tokenizer, model, [case], [demo])[0] 
-        pred = data.get_real_prediction(pred)
-        # print("*****", pred)
 
-        em_ret = data.exact_match_score(
-            pred, 
-            ground_truth, 
-            ground_truth_id
+    for batch in tqdm(batchify(lines, args.batch_size)):
+        batch_data = [json.loads(line) for line in batch]
+        qids = [rd["qid"] for rd in batch_data]
+        preds = [rd["prediction"] for rd in batch_data]
+        questions, ground_truths, ground_truth_ids, cases = zip(
+            *[dataset[qid] for qid in qids]
         )
-        f1_ret = data.f1_score(
-            pred, 
-            ground_truth, 
-            ground_truth_id
-        )
-        value[0].append(em_ret["correct"])
-        for i, k in enumerate(f1_ret.keys()):
-            value[i+1].append(f1_ret[k])
-        # if "use_counter" not in args or args.use_counter:
-        #     for i, k in enumerate(count_list):
-        #         value[i+4].append(rd[k])
-        detail = {
-            "ground_truth": ground_truth,
-            "final_pred": pred,
-            "EM": str(em_ret["correct"]), 
-            "F1": str(f1_ret["f1"]),
-            "question": question,
-            "qid": qid
-        }
-        pred_out.write(json.dumps(detail, ensure_ascii=False)+"\n")
+
+        if need_generate:
+            preds = regenerate_answer(preds, tokenizer, model, cases, [demo] * len(batch_data))
+
+        preds = [data.get_real_prediction(pred) for pred in preds]
+
+        for qid, pred, question, ground_truth, ground_truth_id in zip(
+            qids, preds, questions, ground_truths, ground_truth_ids
+        ):
+            em_ret = data.exact_match_score(pred, ground_truth, ground_truth_id)
+            f1_ret = data.f1_score(pred, ground_truth, ground_truth_id)
+            value[0].append(em_ret["correct"])
+            for i, k in enumerate(f1_ret.keys()):
+                value[i+1].append(f1_ret[k])
+            # if "use_counter" not in args or args.use_counter:
+            #     for i, k in enumerate(count_list):
+            #         value[i+4].append(rd[k])
+            detail = {
+                "ground_truth": ground_truth,
+                "final_pred": pred,
+                "EM": str(em_ret["correct"]),
+                "F1": str(f1_ret["f1"]),
+                "question": question,
+                "qid": qid
+            }
+            pred_out.write(json.dumps(detail, ensure_ascii=False)+"\n")
 
     ret = []
     for i, metric in enumerate(metrics):
