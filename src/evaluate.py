@@ -1,13 +1,15 @@
-import os
-import json
 import argparse
+import json
 import logging
-import torch
+import os
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from data import StrategyQA, WikiMultiHopQA, HotpotQA, IIRC
-from transformers import AutoTokenizer, AutoModelForCausalLM 
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from data import IIRC, HotpotQA, StrategyQA, WikiMultiHopQA
+from utils import batchify
 
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__)
@@ -23,44 +25,68 @@ def get_args():
     return args
 
 
-def regenerate_answer(cot, tokenizer, model, case, demo):
-    # print("##### origin #####")
-    # print(cot)
-    split_words = ["\nQuestion:", "#10000000", "Note:", ". Question:"] + [tokenizer.eos_token]
-    if tokenizer.pad_token:
-        split_words.append(tokenizer.pad_token)
-    # split_words = ["Question:", "#10000000", "\n"]
-    for word in split_words:
-        pos = cot.find(word)
-        if pos != -1 and pos > 0:
-            cot = cot[:pos]
-    if "the answer is" in cot:
-        return cot 
-
-    cot += " So the answer is "
-    prompt = "".join([d["case"]+"\n" for d in demo])
-    prompt += case + " " + cot
-    input_ids = tokenizer.encode(prompt, return_tensors="pt")
-    input_ids = input_ids.to(model.device)
-    input_length = input_ids.shape[1]
-    attention_mask = torch.ones_like(input_ids)
-    outputs = model.generate(
-        input_ids = input_ids, 
-        attention_mask = attention_mask, 
-        max_new_tokens = 20)
-    generated_tokens = outputs[:, input_length:]
-    text = tokenizer.decode(generated_tokens[0])
-    text = cot + text.strip()
+def clean_generated_text(text, split_words):
+    """
+    Cleans and truncates the generated text based on split words.
+    """
     for word in split_words:
         pos = text.find(word)
         if pos != -1:
-            text = text[:pos] 
-    # print("##### prompt #####")
-    # print(prompt)
-    # print("##### output #####")
-    # print(text)
-    # print("##### pred #####")
+            text = text[:pos]
     return text
+
+
+def regenerate_answer(cots, tokenizer, model, cases, demos):
+    split_words = ["\nQuestion:", "#10000000", "Note:", ". Question:"] + [tokenizer.eos_token]
+    if tokenizer.pad_token:
+        split_words.append(tokenizer.pad_token)
+    
+    results = [] 
+    processed_cots = []
+    processed_indices = []  # Track indices of processed CoTs
+
+    for idx, cot in enumerate(cots):
+        cot = clean_generated_text(cot, split_words)
+        if "the answer is" in cot:
+            results.append(cot)  # Directly append to results
+        else:
+            processed_cots.append(cot + " So the answer is ")
+            processed_indices.append(idx)  # Track the index of this CoT
+
+    # Generate predictions only for processed CoTs
+    if processed_cots:
+        prompts = []
+        for case, cot, demo in zip(cases, processed_cots, demos):
+            prompt = "".join([d["case"] + "\n" for d in demo])
+            prompt += case + " " + cot
+            prompts.append(prompt)
+
+        inputs = tokenizer(prompts, return_tensors="pt", padding=True, truncation=True)
+        inputs = inputs.to(model.device)
+        input_lengths = inputs["input_ids"].shape[1]
+        outputs = model.generate(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"],
+            max_new_tokens=20
+        )
+        generated_tokens = outputs[:, input_lengths:]
+        texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+
+        for cot, text in zip(processed_cots, texts):
+            text = cot + text.strip()
+            results.append(clean_generated_text(text, split_words))
+
+    # Reorder results to match the original order of `cots`
+    final_results = [None] * len(cots)
+    result_idx = 0
+    for idx in range(len(cots)):
+        if idx in processed_indices:
+            final_results[idx] = results[result_idx]
+            result_idx += 1
+        else:
+            final_results[idx] = results.pop(0)
+
+    return final_results
 
 
 def main():
@@ -101,46 +127,47 @@ def main():
     if need_generate:
         tokenizer = AutoTokenizer.from_pretrained(args.model)
         model = AutoModelForCausalLM.from_pretrained(args.model, device_map="auto",
-                                                     trust_remote_code = "falcon" in args.model)
+                                                     trust_remote_code="falcon" in args.model)
         demo = data.dataset[0]["demo"]
 
-    pred_out = open(f"{args.output_dir}/details.jsonl", "w")
-    
-    for line in tqdm(lines):
-        rd = json.loads(line)
-        qid = rd["qid"]
-        pred = rd["prediction"]
-        question, ground_truth, ground_truth_id, case = dataset[qid]
-        if need_generate:
-            pred = regenerate_answer(pred, tokenizer, model, case, demo) 
-        pred = data.get_real_prediction(pred)
-        # print("*****", pred)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
 
-        em_ret = data.exact_match_score(
-            pred, 
-            ground_truth, 
-            ground_truth_id
+    pred_out = open(f"{args.output_dir}/details.jsonl", "w")
+
+    for batch in tqdm(batchify(lines, args.batch_size), total=len(lines)//args.batch_size):
+        batch_data = [json.loads(line) for line in batch]
+        qids = [rd["qid"] for rd in batch_data]
+        preds = [rd["prediction"] for rd in batch_data]
+        questions, ground_truths, ground_truth_ids, cases = zip(
+            *[dataset[qid] for qid in qids]
         )
-        f1_ret = data.f1_score(
-            pred, 
-            ground_truth, 
-            ground_truth_id
-        )
-        value[0].append(em_ret["correct"])
-        for i, k in enumerate(f1_ret.keys()):
-            value[i+1].append(f1_ret[k])
-        # if "use_counter" not in args or args.use_counter:
-        #     for i, k in enumerate(count_list):
-        #         value[i+4].append(rd[k])
-        detail = {
-            "ground_truth": ground_truth,
-            "final_pred": pred,
-            "EM": str(em_ret["correct"]), 
-            "F1": str(f1_ret["f1"]),
-            "question": question,
-            "qid": qid
-        }
-        pred_out.write(json.dumps(detail, ensure_ascii=False)+"\n")
+
+        if need_generate:
+            preds = regenerate_answer(preds, tokenizer, model, cases, [demo] * len(batch_data))
+
+        preds = [data.get_real_prediction(pred) for pred in preds]
+
+        for qid, pred, question, ground_truth, ground_truth_id in zip(
+            qids, preds, questions, ground_truths, ground_truth_ids
+        ):
+            em_ret = data.exact_match_score(pred, ground_truth, ground_truth_id)
+            f1_ret = data.f1_score(pred, ground_truth, ground_truth_id)
+            value[0].append(em_ret["correct"])
+            for i, k in enumerate(f1_ret.keys()):
+                value[i+1].append(f1_ret[k])
+            # if "use_counter" not in args or args.use_counter:
+            #     for i, k in enumerate(count_list):
+            #         value[i+4].append(rd[k])
+            detail = {
+                "ground_truth": ground_truth,
+                "final_pred": pred,
+                "EM": str(em_ret["correct"]),
+                "F1": str(f1_ret["f1"]),
+                "question": question,
+                "qid": qid
+            }
+            pred_out.write(json.dumps(detail, ensure_ascii=False)+"\n")
 
     ret = []
     for i, metric in enumerate(metrics):

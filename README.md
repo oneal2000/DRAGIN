@@ -43,9 +43,7 @@ DRAGIN addresses the limitations of current dynamic RAG (Retrieval Augmented Gen
 ```bash
 conda create -n dragin python=3.9
 conda activate dragin
-pip install torch==2.1.1
 pip install -r requirements.txt
-python -m spacy download en_core_web_sm
 ```
 
 ## Run DRAGIN
