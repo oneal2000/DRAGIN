@@ -135,7 +135,7 @@ def main():
 
     pred_out = open(f"{args.output_dir}/details.jsonl", "w")
 
-    for batch in tqdm(batchify(lines, args.batch_size)):
+    for batch in tqdm(batchify(lines, args.batch_size), total=len(lines)//args.batch_size):
         batch_data = [json.loads(line) for line in batch]
         qids = [rd["qid"] for rd in batch_data]
         preds = [rd["prediction"] for rd in batch_data]
