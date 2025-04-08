@@ -2,7 +2,7 @@ import argparse
 import json
 import logging
 import os
-
+import torch
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -126,7 +126,7 @@ def main():
     need_generate = args.dataset in ['2wikimultihopqa', "hotpotqa", "iirc", "strategyqa"] 
     if need_generate:
         tokenizer = AutoTokenizer.from_pretrained(args.model)
-        model = AutoModelForCausalLM.from_pretrained(args.model, device_map="auto",
+        model = AutoModelForCausalLM.from_pretrained(args.model, device_map="auto", torch_dtype=torch.bfloat16,
                                                      trust_remote_code="falcon" in args.model)
         demo = data.dataset[0]["demo"]
 
