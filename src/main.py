@@ -6,7 +6,7 @@ from copy import copy
 import logging
 from data import *
 from algorithm import *
-from utils import *
+from utils import batchify
 
 logging.basicConfig(level=logging.INFO) 
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ def main():
         model = DynamicThresholdingRAG(args)
 
     logger.info("start inference")
-    for batch in tqdm(batchify(data, args.batch_size)):
+    for batch in tqdm(batchify(data, args.batch_size), total=len(data)//args.batch_size):
         # last_counter = copy(model.generator.counter)
         inference_results = model.inference(batch["question"], batch["demo"], batch["case"])
         preds = inference_results['text']

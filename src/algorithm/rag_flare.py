@@ -1,7 +1,10 @@
+from math import exp
+
+import numpy as np
+
 from .base_rag import BasicRAG
 from .utils import nlp
-from math import exp
-import numpy as np
+
 
 class FlareRAG(BasicRAG):
     def __init__(self, args):
@@ -34,7 +37,6 @@ class FlareRAG(BasicRAG):
                 # replace all hallucinated tokens in current sentence with [xxx]
                 curr = sent
                 pos = 0
-                # # 这里改成了替换掉最大的那个，而不是所有的
                 # max_prob = 0
                 # for prob, tok in zip(probs, tokens[tid:tr+1]):
                 #     max_prob = max(prob, max_prob)
@@ -56,49 +58,94 @@ class FlareRAG(BasicRAG):
         # No hallucination
         return prev, None, False
     
-    def inference(self, question, demo, case):
-        text = ""
-        exemplars = "".join([d["case"]+"\n" for d in demo])
-        hallucination = False
-        curr = ""
-        first_iter = True
-        while True:
-            if first_iter and len(curr) == 0:
-                retrieve_question = question
-            elif self.query_formulation == "direct":
-                retrieve_question = curr.replace("[xxx]", "")
-            elif self.query_formulation == "forward_all":
-                tmp_all = [question, text, ptext]
-                retrieve_question = " ".join(s for s in tmp_all if len(s) > 0)
-            else:
-                raise NotImplemented
-            docs = self.retrieve(retrieve_question, topk=self.retrieve_topk)
-            prompt = exemplars + "Context:\n"
-            for i, doc in enumerate(docs):
-                prompt += f"[{i+1}] {doc}\n"
-            prompt += "Answer in the same format as before. Please ensure that the final sentence of the answer starts with \"So the answer is\".\n"
-            prompt += case + " " + text
+    def inference(self, questions, demos, cases):
+        batch_size = len(questions)
+        texts = [""] * batch_size
+        hallucinations = [False] * batch_size
+        currents = [""] * batch_size
+        first_iters = [True] * batch_size
+        generatings = [True] * batch_size
+
+        while any(generatings):
+            retrieve_questions = []
+            for i in range(batch_size):
+                if not generatings[i]:
+                    retrieve_questions.append(None)
+                    continue
+                if first_iters[i] and len(currents[i]) == 0:
+                    retrieve_questions.append(questions[i])
+                elif self.query_formulation == "direct":
+                    retrieve_questions.append(currents[i].replace("[xxx]", ""))
+                elif self.query_formulation == "forward_all":
+                    tmp_all = [questions[i], texts[i], currents[i]]
+                    retrieve_questions.append(" ".join(s for s in tmp_all if len(s) > 0))
+                else:
+                    raise NotImplementedError
+
+            # Filter out None retrieve_questions
+            filtered_questions = [q for q in retrieve_questions if q is not None]
+            valid_indices = [i for i, q in enumerate(retrieve_questions) if q is not None]
+            docs_batch = self.retrieve(filtered_questions, topk=self.retrieve_topk)
+
+            # Reconstruct the full docs_batch with None values
+            full_docs_batch = [None] * batch_size
+            for idx, docs in zip(valid_indices, docs_batch):
+                full_docs_batch[idx] = docs
+
+            prompts = []
+            for i, (demo, case, text, docs) in enumerate(zip(demos, cases, texts, full_docs_batch)):
+                if not generatings[i]:
+                    prompts.append(None)
+                    continue
+                exemplars = "".join([d["case"] + "\n" for d in demo])
+                prompt = exemplars + "Context:\n"
+                for j, doc in enumerate(docs):
+                    prompt += f"[{j+1}] {doc}\n"
+                prompt += "Answer in the same format as before. Please ensure that the final sentence of the answer starts with \"So the answer is\".\n"
+                prompt += case + " " + text
+                prompts.append(prompt)
 
             return_dict = self.generator.generate(
-                prompt, 
-                self.generate_max_length, 
+                [p for p in prompts if p is not None],
+                self.generate_max_length,
                 return_logprobs=True
             )
-            new_text, tokens, logprobs = return_dict['text'], return_dict['tokens'], return_dict['logprobs']
-            ptext, curr, hallucination = self.modifier(new_text, tokens, logprobs, first_iter)
-            if self.use_counter == True:
-                self.counter.add_generate(new_text, tokens)
-                self.counter.hallucinated += hallucination
-            if not hallucination:
-                text = text.strip() + " " + ptext.strip()
-                break
-                
-            text = text.strip() + " " + ptext.strip()
-            tokens_count = len(self.generator.tokenizer.encode(text))
-            first_iter = False
-            if tokens_count > self.generate_max_length or "the answer is" in text:
-                break
-        return text.strip()
+
+            new_texts = return_dict['text']
+            tokens_batch = return_dict['tokens']
+            logprobs_batch = return_dict['logprobs']
+
+            new_text_idx = 0
+            for i in range(batch_size):
+                if not generatings[i]:
+                    continue
+
+                ptext, curr, hallucination = self.modifier(
+                    new_texts[new_text_idx], tokens_batch[new_text_idx], logprobs_batch[new_text_idx], first_iters[i]
+                )
+                new_text_idx += 1
+
+                if self.use_counter:
+                    self.counter.add_generate(new_texts[new_text_idx - 1], tokens_batch[new_text_idx - 1])
+                    self.counter.hallucinated += hallucination
+
+                if not hallucination:
+                    texts[i] = texts[i].strip() + " " + ptext.strip()
+                    generatings[i] = False
+                else:
+                    texts[i] = texts[i].strip() + " " + ptext.strip()
+                    currents[i] = curr
+                    hallucinations[i] = hallucination
+
+                # Check stopping conditions
+                tokens_count = len(self.generator.tokenizer.encode(texts[i]))
+                first_iters[i] = False
+                if tokens_count > self.generate_max_length or "the answer is" in texts[i]:
+                    generatings[i] = False
+
+        results = [text.strip() for text in texts]
+        inference_results = dict(text=results)
+        return inference_results
 
 class EntityFlareRAG(FlareRAG):
     def __init__(self, args):
