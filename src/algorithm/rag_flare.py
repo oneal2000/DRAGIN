@@ -37,7 +37,6 @@ class FlareRAG(BasicRAG):
                 # replace all hallucinated tokens in current sentence with [xxx]
                 curr = sent
                 pos = 0
-                # # 这里改成了替换掉最大的那个，而不是所有的
                 # max_prob = 0
                 # for prob, tok in zip(probs, tokens[tid:tr+1]):
                 #     max_prob = max(prob, max_prob)
@@ -82,11 +81,19 @@ class FlareRAG(BasicRAG):
                     retrieve_questions.append(" ".join(s for s in tmp_all if len(s) > 0))
                 else:
                     raise NotImplementedError
-            
-            docs_batch = self.retrieve(retrieve_questions, topk=self.retrieve_topk)
+
+            # Filter out None retrieve_questions
+            filtered_questions = [q for q in retrieve_questions if q is not None]
+            valid_indices = [i for i, q in enumerate(retrieve_questions) if q is not None]
+            docs_batch = self.retrieve(filtered_questions, topk=self.retrieve_topk)
+
+            # Reconstruct the full docs_batch with None values
+            full_docs_batch = [None] * batch_size
+            for idx, docs in zip(valid_indices, docs_batch):
+                full_docs_batch[idx] = docs
 
             prompts = []
-            for i, (demo, case, text, docs) in enumerate(zip(demos, cases, texts, docs_batch)):
+            for i, (demo, case, text, docs) in enumerate(zip(demos, cases, texts, full_docs_batch)):
                 if not generatings[i]:
                     prompts.append(None)
                     continue
@@ -136,7 +143,9 @@ class FlareRAG(BasicRAG):
                 if tokens_count > self.generate_max_length or "the answer is" in texts[i]:
                     generatings[i] = False
 
-        return [text.strip() for text in texts]
+        results = [text.strip() for text in texts]
+        inference_results = dict(text=results)
+        return inference_results
 
 class EntityFlareRAG(FlareRAG):
     def __init__(self, args):
