@@ -140,7 +140,7 @@ class FlareRAG(BasicRAG):
                 # Check stopping conditions
                 tokens_count = len(self.generator.tokenizer.encode(texts[i]))
                 first_iters[i] = False
-                if tokens_count > self.generate_max_length or "the answer is" in texts[i]:
+                if tokens_count > self.generate_max_length or "\nQuestion" in texts[i] or ". Question" in texts[i]:
                     generatings[i] = False
 
         results = [text.strip() for text in texts]

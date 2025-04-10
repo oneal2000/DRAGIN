@@ -271,7 +271,7 @@ class AttnWeightRAG(BasicRAG):
 
                 # Check the number of tokens must be less than generate_max_length.
                 tokens_count = len(self.generator.tokenizer.encode(texts[i]))
-                if tokens_count > self.generate_max_length or len(texts[i]) <= old_len or "the answer is" in texts[i]:
+                if tokens_count > self.generate_max_length or len(texts[i]) <= old_len or "\nQuestion" in texts[i] or ". Question" in texts[i]:
                     generatings[i] = False
 
         results = [text.strip() for text in texts]
