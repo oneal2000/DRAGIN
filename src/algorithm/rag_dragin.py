@@ -89,7 +89,7 @@ class AttnWeightRAG(BasicRAG):
             tokenseq = "".join(tokens_tmp[r[0]: r[1]+1]).replace(self.generator.space_token, "")
             tokens.append(tokenseq)
 
-        # 获取幻觉词对应的 attention
+        # Get the attention corresponding to hallucinated words
         curr_st = len(tokens) - len(curr_tokens)
         atten_tmp = torch.mean(atten_tmp, dim=0)
         attns = []
@@ -99,17 +99,17 @@ class AttnWeightRAG(BasicRAG):
             for i in range(r[0], r[1] + 1):
                 if i == 0:
                     continue
-                v = atten_tmp[i-1][:r[0]] # 上一位的
+                v = atten_tmp[i-1][:r[0]] # Previous position
                 v = v / v.sum()
                 t = torch.zeros(input_length)
                 t[:r[0]] = v
                 att += t
             att /= (r[1] - r[0] + 1)
-            # merge token for att
+            # Merge token for attention
             att = torch.tensor([att[rr[0]:rr[1]+1].sum() for rr in range_])
             attns.append(att)
             
-        # 计算每个超过阈值的 token 在前文的 attentions
+        # Calculate the attentions of each token exceeding the threshold in the preceding text.
         forward_attns = torch.zeros(len(tokens))
         hit_cnt = 0
         for i in range(len(curr_hit)):
@@ -119,7 +119,7 @@ class AttnWeightRAG(BasicRAG):
         forward_attns /= hit_cnt
         forward_attns = forward_attns.tolist()
 
-        # 分析词性，保留实词对应的 attns
+        # Analyze part-of-speech and retain the attention weights corresponding to content words.
         doc = nlp(all_text)
         real_words = set(token.text for token in doc if token.pos_ in 
                       ['NOUN', 'ADJ', 'VERB', 'PROPN', 'NUM'])
@@ -148,7 +148,7 @@ class AttnWeightRAG(BasicRAG):
         real_pairs = sorted(real_pairs, key = lambda x:x[2])
         return " ".join([x[1] for x in real_pairs])
         
-    def inference(self, question, demo, case):
+    def original_inference(self, question, demo, case):
         # assert self.query_formulation == "direct"
         # print(question)
         # print("#" * 20)
@@ -169,7 +169,7 @@ class AttnWeightRAG(BasicRAG):
             )
             weight = entropies if self.method == "dragin" else [-v for v in logprobs]
 
-            if self.use_counter == True:
+            if self.use_counter:
                 self.counter.add_generate(new_text, tokens)
             hallucination, ptext, curr_tokens, curr_hit =  self.modifier(new_text, tokens, attns, weight)
             if not hallucination:
@@ -212,7 +212,7 @@ class AttnWeightRAG(BasicRAG):
                         curr_hit = curr_hit,
                     ) 
                 else:
-                    raise NotImplemented
+                    raise NotImplementedError
 
                 docs = self.retrieve(retrieve_question, topk=self.retrieve_topk)
                 prompt = "".join([d["case"]+"\n" for d in demo])
@@ -224,8 +224,13 @@ class AttnWeightRAG(BasicRAG):
                 prompt += " ".join(s for s in tmp_li if len(s) > 0)
                 # print('#####', prompt)
                 # prompt += case + " " + text + " " + ptext.strip()
-                new_text, tokens, _ = self.generator.generate(prompt, self.generate_max_length)
-                if self.use_counter == True:
+                
+                return_dict = self.generator.generate(prompt, self.generate_max_length)
+                new_text = return_dict['text'][0]
+                tokens = return_dict['tokens'][0]
+                logprobs = return_dict['logprobs'][0]
+
+                if self.use_counter:
                     self.counter.add_generate(new_text, tokens)
                     self.counter.hallucinated += 1
                 new_text = self.get_top_sentence(new_text)
@@ -233,9 +238,18 @@ class AttnWeightRAG(BasicRAG):
                 text = " ".join(s for s in tmp_li if len(s) > 0)
                 # text = text.strip() + " " + ptext.strip() + " " + new_text.strip()
             
-            # 判断 token 的个数要少于 generate_max_length 
+            # Check the number of tokens must be less than generate_max_length.
             tokens_count = len(self.generator.tokenizer.encode(text))
             if tokens_count > self.generate_max_length or len(text) <= old_len or "the answer is" in text:
                 break
         # print("#" * 20)
         return text
+    
+    def inference(self, questions, demos, cases):
+        texts = []
+        for question, demo, case in zip(questions, demos, cases):
+            text = self.original_inference(question, demo, case)
+            texts.append(text.strip())
+        inference_results = dict(text=texts)
+        return inference_results
+    
