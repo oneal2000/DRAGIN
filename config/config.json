@@ -1,6 +1,6 @@
 {
     "model": "meta-llama/Llama-3.1-8B-Instruct",
-    "method": "flare",
+    "method": "dragin",
     "dataset": "2wikimultihopqa",
     "data_path": "../data/2wikimultihopqa",
     "fewshot": 6,
@@ -11,7 +11,7 @@
     "generate_max_length": 100,
     "retriever": "BM25",
     "retrieve_topk": 3,
-    "query_formulation": "direct",
+    "query_formulation": "current",
     "es_index_name": "wiki",
     "use_counter": true
 }

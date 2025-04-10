@@ -10,10 +10,11 @@ class FixSentenceRAG(BasicRAG):
         texts = [""] * len(questions)
         retrieve_questions = questions
         generatings = [True] * len(questions)
-        while True:
+        while any(generatings):
             old_len = [len(text) for text in texts]
             docs = self.retrieve(retrieve_questions, topk=self.retrieve_topk)
-        # 对 topk 个 passage 生成 prompt
+
+            # Generate prompts for topk passages
             prompts = []
             doc_id = 0
             for generating, text, demo, case in zip(generatings, texts, demos, cases):
@@ -38,7 +39,7 @@ class FixSentenceRAG(BasicRAG):
                 texts[i] = (texts[i].strip() + " " + new_texts[new_text_id].strip()).strip()
                 new_text_id += 1
             
-            # 判断 token 的个数要少于 generate_max_length 
+            # The number of tokens should be less than generate_max_length
             tokens_list = self.generator.tokenizer.batch_encode_plus(texts)['input_ids']
             tokens_cnts = [len(tokens) - 1 for tokens in tokens_list]
             new_text_id = 0
@@ -51,7 +52,5 @@ class FixSentenceRAG(BasicRAG):
                 else:
                     retrieve_questions.append(new_texts[new_text_id].strip())
                 new_text_id += 1
-            if all(not generating for generating in generatings):
-                break
         inference_results = dict(text=texts)
         return inference_results
