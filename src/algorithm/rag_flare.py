@@ -4,6 +4,59 @@ import numpy as np
 
 from .base_rag import BasicRAG
 from .utils import nlp
+import logging
+import os
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler("flare.log")
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter("%(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
+DEBUG = os.environ.get("DEBUG", "0") == "1"
+
+
+def mark_hallucinated_tokens(sentence, sentence_tokens, probabilities, threshold):
+    """Mark tokens with probabilities below threshold as [xxx]."""
+    marked_sentence = sentence
+    position = 0
+
+    for prob, token in zip(probabilities, sentence_tokens):
+        token = token.strip()
+        token_position = marked_sentence[position:].find(token) + position
+
+        if prob < threshold:
+            # Replace low-confidence token with [xxx]
+            marked_sentence = (
+                marked_sentence[:token_position]
+                + "[xxx]"
+                + marked_sentence[token_position + len(token) :]
+            )
+            position = token_position + len("[xxx]")
+        else:
+            position = token_position + len(token)
+    return marked_sentence
+
+
+def find_token_range_for_sentence(sentence, tokens, start_index):
+    """Helper function to find which tokens belong to a sentence."""
+    position = 0
+    token_range = start_index
+
+    while token_range < len(tokens):
+        # Find the current token in the remaining part of the sentence
+        token_position = sentence[position:].find(tokens[token_range].strip())
+        if token_position == -1:
+            break
+
+        # Move past this token in the sentence
+        position += token_position + len(tokens[token_range].strip())
+        token_range += 1
+
+    return token_range
 
 
 class FlareRAG(BasicRAG):
@@ -11,53 +64,62 @@ class FlareRAG(BasicRAG):
         super().__init__(args)
 
     def modifier(self, text, tokens, logprobs, first_iter):
+        """
+        Analyze text for hallucinations by detecting low-confidence tokens.
+        """
+
+        # Split text into sentences and remove empty ones
         sentences = [sent.text.strip() for sent in nlp(text).sents]
         sentences = [sent for sent in sentences if len(sent) > 0]
 
-        tid = 0
-        prev = ""
-        for sid, sent in enumerate(sentences):
-            if 'the answer is' in sent.lower():
-                if prev != "":
-                    prev += " "
-                prev += sent
+        token_index = 0
+        processed_text = ""
+
+        for sentence_id, sentence in enumerate(sentences):
+            # Handle the final answer separately (usually concludes with "the answer is")
+            if "the answer is" in sentence.lower():
+                if processed_text:
+                    processed_text += " "
+                processed_text += sentence
                 break
-            pos = 0
-            tr = tid
-            while tr < len(tokens):
-                apr = sent[pos:].find(tokens[tr].strip())
-                if apr == -1:
-                    break
-                pos += apr + len(tokens[tr].strip())
-                tr += 1
-            probs = np.array([exp(v) for v in logprobs[tid:tr]])
-            if (tid == tr):
+
+            # Find which tokens belong to the current sentence
+            sentence_token_range = find_token_range_for_sentence(
+                sentence, tokens, token_index
+            )
+            if sentence_token_range == token_index:
                 continue
-            if (first_iter or sid > 0) and np.min(probs) < self.threshold: # hallucination
-                # replace all hallucinated tokens in current sentence with [xxx]
-                curr = sent
-                pos = 0
-                # max_prob = 0
-                # for prob, tok in zip(probs, tokens[tid:tr+1]):
-                #     max_prob = max(prob, max_prob)
-                for prob, tok in zip(probs, tokens[tid:tr]):
-                    tok = tok.strip()
-                    apr = curr[pos:].find(tok) + pos
-                    if prob < self.threshold:
-                    # if prob == max_prob:
-                        curr = curr[:apr] + "[xxx]" + curr[apr+len(tok):]
-                        pos = apr + len("[xxx]")
-                    else:
-                        pos = apr + len(tok)
-                return prev, curr, True
-            if prev != "":
-                prev += " "
-            prev += sent
-            tid = tr
-        
-        # No hallucination
-        return prev, None, False
-    
+
+            # Calculate probabilities for all tokens in the sentence
+            token_probabilities = np.array(
+                [exp(v) for v in logprobs[token_index:sentence_token_range]]
+            )
+
+            if (first_iter or sentence_id > 0) and np.min(
+                token_probabilities
+            ) < self.threshold:
+                # Hallucination detected - mark low confidence tokens
+                marked_sentence = mark_hallucinated_tokens(
+                    sentence,
+                    tokens[token_index:sentence_token_range],
+                    token_probabilities,
+                    self.threshold,
+                )
+                if DEBUG:
+                    logger.info("----------------")
+                    logger.info(f"original sentence: {sentence}")
+                    logger.info(f"masked_sentence: {marked_sentence}")
+                return processed_text, marked_sentence, True
+
+            # No hallucination in this sentence, add it to processed text
+            if processed_text:
+                processed_text += " "
+            processed_text += sentence
+            token_index = sentence_token_range
+
+        # No hallucination found in any sentence
+        return processed_text, None, False
+
     def inference(self, questions, demos, cases):
         batch_size = len(questions)
         texts = [""] * batch_size
@@ -121,12 +183,17 @@ class FlareRAG(BasicRAG):
                     continue
 
                 ptext, curr, hallucination = self.modifier(
-                    new_texts[new_text_idx], tokens_batch[new_text_idx], logprobs_batch[new_text_idx], first_iters[i]
+                    new_texts[new_text_idx],
+                    tokens_batch[new_text_idx],
+                    logprobs_batch[new_text_idx],
+                    first_iters[i],
                 )
                 new_text_idx += 1
 
                 if self.use_counter:
-                    self.counter.add_generate(new_texts[new_text_idx - 1], tokens_batch[new_text_idx - 1])
+                    self.counter.add_generate(
+                        new_texts[new_text_idx - 1], tokens_batch[new_text_idx - 1]
+                    )
                     self.counter.hallucinated += hallucination
 
                 if not hallucination:
@@ -140,7 +207,11 @@ class FlareRAG(BasicRAG):
                 # Check stopping conditions
                 tokens_count = len(self.generator.tokenizer.encode(texts[i]))
                 first_iters[i] = False
-                if tokens_count > self.generate_max_length or "\nQuestion" in texts[i] or ". Question" in texts[i]:
+                if (
+                    tokens_count > self.generate_max_length
+                    or "\nQuestion" in texts[i]
+                    or ". Question" in texts[i]
+                ):
                     generatings[i] = False
 
         results = [text.strip() for text in texts]
@@ -150,7 +221,7 @@ class FlareRAG(BasicRAG):
 class EntityFlareRAG(FlareRAG):
     def __init__(self, args):
         super().__init__(args)
-    
+
     def modifier(self, text, tokens, logprobs):
         sentences = [sent.text.strip() for sent in nlp(text).sents]
         sentences = [sent for sent in sentences if len(sent) > 0]
@@ -160,7 +231,7 @@ class EntityFlareRAG(FlareRAG):
             doc = nlp(sent)
             li = [ent.text for ent in doc.ents]
             entity.append(li)
-        
+
         belonging = [-1] * len(text)
         pos = 0
         for tid, tok in enumerate(tokens):
@@ -169,7 +240,7 @@ class EntityFlareRAG(FlareRAG):
             for j in range(pos, apr+len(tok)):
                 belonging[j] = tid
             pos = apr + len(tok)
-        
+
         entity_intv = []
         for sid, sent in enumerate(sentences):
             tmp = []
@@ -218,7 +289,7 @@ class EntityFlareRAG(FlareRAG):
                 "min": np.min,
             }.get(self.sentence_solver, lambda x: 0)(probs)
             if p > self.hallucination_threshold: # hallucination
-                # keep sentences before hallucination 
+                # keep sentences before hallucination
                 prev = "" if sid == 0 else " ".join(sentences[:sid])
                 # replace all hallucinated entities in current sentence with [xxx]
                 curr = sent
