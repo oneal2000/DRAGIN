@@ -15,6 +15,7 @@ https://discuss.elastic.co/
 The forum is highly active, and you can find solutions to almost any error you encounter there. We hope this helps you get started more smoothly!
 
 ------
+### Very Important:
 
 Another reminder for reproducing our paper: In order to reproduce the full results for our paper, please ensure that the entire corpus is completely indexed in Elasticsearch. This can take a significant amount of time, often up to half a day, and there is no progress bar.
 
