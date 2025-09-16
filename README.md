@@ -4,7 +4,7 @@
 
 
 
-**📢 September 16, 2025 Update:**
+## **📢 September 16, 2025 Update:**
 
 Thank you for your interest in our paper and for visiting this repository. We sincerely appreciate everyone who has read our work and tried to run it.
 
@@ -15,7 +15,7 @@ https://discuss.elastic.co/
 The forum is highly active, and you can find solutions to almost any error you encounter there. We hope this helps you get started more smoothly!
 
 ------
-### Very Important:
+#### Very Important:
 
 Another reminder for reproducing our paper: In order to reproduce the full results for our paper, please ensure that the entire corpus is completely indexed in Elasticsearch. This can take a significant amount of time, often up to half a day, and there is no progress bar.
 
@@ -39,6 +39,8 @@ Several other published papers have also independently reproduced our work, ofte
 
 This work has been reproduced by many subsequent studies and has proven effective in most cases, generally outperforming state-of-the-art methods from before 2024 (our paper was published in March 2024). **However, there are specific instances where certain datasets and corpora are not well-suited for DRAGIN, which we believe is acceptable. Essentially, DRAGIN models the information needs of LLMs based on keywords, making it more effective for retrieval tasks that rely on lexical matching. In other scenarios, particularly those where dense retrieval excels, DRAGIN's performance is not as strong.**
 
+
+------
 
 **📢 January 18, 2025 Update, Important:**
 
