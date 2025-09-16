@@ -6,7 +6,7 @@
 
 **📢 September 16, 2025 Update:**
 
-A reminder for those reproducing our paper: please ensure that the entire corpus is fully indexed in Elasticsearch. This corpus is very large, and building the index can take half a day. Elasticsearch does not provide a progress bar for this process. If the complete corpus is not indexed, your reproduced results may be a few percentage points lower (as some relevant passages might not be indexed), though the drop will not be substantial (as the performance of wo-RAG is already strong).
+A reminder for reproducing our paper: please ensure that the entire corpus is fully indexed in Elasticsearch. This corpus is very large, and building the index can take half a day. Elasticsearch does not provide a progress bar for this process. If the complete corpus is not indexed, your reproduced results may be a few percentage points lower (as some relevant passages might not be indexed), though the drop will not be substantial (as the performance of wo-RAG is already strong).
 
 Additionally, we selected 1000 questions from each dataset. We have received some inquiries regarding this selection process. Specifically, we chose the top 1000 questions. Taking the top 1000 is as reasonable as randomly sampling 1000, and it offers more stability by avoiding the influence of random factors.
 
