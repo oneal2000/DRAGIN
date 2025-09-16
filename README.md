@@ -6,7 +6,15 @@
 
 **📢 September 16, 2025 Update:**
 
-A reminder for reproducing our paper: please ensure that the entire corpus is fully indexed in Elasticsearch. This corpus is very large, and building the index can take half a day. Elasticsearch does not provide a progress bar for this process. If the complete corpus is not indexed, your reproduced results may be a few percentage points lower (as some relevant passages might not be indexed), though the drop will not be substantial (as the performance of wo-RAG is already strong).
+Thank you for your interest in our paper and for visiting this repository. We sincerely appreciate everyone who has read our work and tried to run it.
+
+We've received some inquiries regarding the configuration of **Elasticsearch**, and we understand this can be a difficult step. I still remember when I was first getting into RAG two years ago, starting with Zhengbao Jiang's classic paper, FLARE. I also spent a few days troubleshooting Elasticsearch, running into all sorts of unexpected errors. A fantastic resource I discovered back then and still use today is the official Elasticsearch discussion forum:
+
+https://discuss.elastic.co/
+
+The forum is highly active, and you can find solutions to almost any error you encounter there. We hope this helps you get started more smoothly!
+
+Another reminder for reproducing our paper: please ensure that the entire corpus is fully indexed in Elasticsearch. This corpus is very large, and building the index can take half a day. Elasticsearch does not provide a progress bar for this process. If the complete corpus is not indexed, your reproduced results may be a few percentage points lower (as some relevant passages might not be indexed), though the drop will not be substantial (as the performance of wo-RAG is already strong).
 
 Additionally, we selected 1000 questions from each dataset. We have received some inquiries regarding this selection process. Specifically, we chose the top 1000 questions. Taking the top 1000 is as reasonable as randomly sampling 1000, and it offers more stability by avoiding the influence of random factors.
 
@@ -20,7 +28,7 @@ Several other published papers have also independently reproduced our work, ofte
 - Zhao et. al. "MedRAG: Enhancing RAG with Knowledge Graph-Elicited Reasoning for Healthcare Copilot"
 - ......
 
-This work has been reproduced by many subsequent studies and has proven effective in most cases, generally outperforming state-of-the-art methods from before 2024 (our paper was published in March 2024). However, there are specific instances where certain datasets and corpora are not well-suited for DRAGIN, which we believe is acceptable. Essentially, DRAGIN models the information needs of LLMs based on keywords, making it more effective for retrieval tasks that rely on lexical matching. In other scenarios, particularly those where dense retrieval excels, DRAGIN's performance is not as strong.
+This work has been reproduced by many subsequent studies and has proven effective in most cases, generally outperforming state-of-the-art methods from before 2024 (our paper was published in March 2024). **However, there are specific instances where certain datasets and corpora are not well-suited for DRAGIN, which we believe is acceptable. Essentially, DRAGIN models the information needs of LLMs based on keywords, making it more effective for retrieval tasks that rely on lexical matching. In other scenarios, particularly those where dense retrieval excels, DRAGIN's performance is not as strong.**
 
 
 **📢 January 18, 2025 Update, Important:**
