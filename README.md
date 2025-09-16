@@ -14,7 +14,15 @@ https://discuss.elastic.co/
 
 The forum is highly active, and you can find solutions to almost any error you encounter there. We hope this helps you get started more smoothly!
 
-Another reminder for reproducing our paper: please ensure that the entire corpus is fully indexed in Elasticsearch. This corpus is very large, and building the index can take half a day. Elasticsearch does not provide a progress bar for this process. If the complete corpus is not indexed, your reproduced results may be a few percentage points lower (as some relevant passages might not be indexed), though the drop will not be substantial (as the performance of wo-RAG is already strong).
+------
+
+Another reminder for reproducing our paper: In order to reproduce the full results for our paper, please ensure that the entire corpus is completely indexed in Elasticsearch. This can take a significant amount of time, often up to half a day, and there is no progress bar.
+
+We've observed in practice that this lengthy indexing process is highly susceptible to interruptions. If the process is disrupted for any reason, the resulting Elasticsearch index will be incomplete.
+
+If the full corpus is not indexed, your reproduced results will be slightly lower. **This subtle drop in performance can be difficult to detect**, as it may only be a few percentage points and is not substantial. This is because the performance of the model **without RAG** is already strong, which can mask the effect of an incomplete index.
+
+------
 
 Additionally, we selected 1000 questions from each dataset. We have received some inquiries regarding this selection process. Specifically, we chose the top 1000 questions. Taking the top 1000 is as reasonable as randomly sampling 1000, and it offers more stability by avoiding the influence of random factors.
 
