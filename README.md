@@ -1,5 +1,28 @@
 # DRAGIN
 
+
+**📢 September 16, 2025 Update, Important:**
+
+
+
+**📢 September 16, 2025 Update:**
+
+A reminder for those reproducing our paper: please ensure that the entire corpus is fully indexed in Elasticsearch. This corpus is very large, and building the index can take half a day. Elasticsearch does not provide a progress bar for this process. If the complete corpus is not indexed, your reproduced results may be a few percentage points lower (as some relevant passages might not be indexed), though the drop will not be substantial (as the performance of wo-RAG is already strong).
+
+Additionally, we selected 1000 questions from each dataset. We have received some inquiries regarding this selection process. Specifically, we chose the top 1000 questions. Taking the top 1000 is as reasonable as randomly sampling 1000, and it offers more stability by avoiding the influence of random factors.
+
+Furthermore, our method has been independently reproduced by others. For instance, the author of https://github.com/Bocchi7/DRAGIN_simplified independently reproduced our work based solely on the content provided in the paper. We have contacted them and obtained their results. While there are minor differences in the specific numbers, a t-test for statistical significance revealed that these differences are not significant.
+
+Several other works have also independently reproduced our findings, often applying DRAGIN to new datasets using the default hyperparameters without any adjustments. These include:
+
+- Parekh et. al. "Dynamic Strategy Planning for Efficient Question Answering with Large Language Models"
+- Guan et. al. "DeepRAG: Thinking to Retrieve Step by Step for Large Language Models"
+- Jiang et. al. "TC–RAG: Turing–Complete RAG’s Case study on Medical LLM Systems"
+- Zhao et. al. "MedRAG: Enhancing RAG with Knowledge Graph-Elicited Reasoning for Healthcare Copilot"
+
+This work has been reproduced by many subsequent studies and has proven effective in most cases, generally outperforming state-of-the-art methods from before 2024 (our paper was published in March 2024). However, there are specific instances where certain datasets and corpora are not well-suited for DRAGIN, which we believe is acceptable. Essentially, DRAGIN models the information needs of LLMs based on keywords, making it more effective for retrieval tasks that rely on lexical matching. In other scenarios, particularly those where dense retrieval excels, DRAGIN's performance is not as strong.
+
+
 **📢 January 18, 2025 Update, Important:**
 
 We have observed significant performance differences in recently released LLMs (e.g., Qwen 2.5 series) **when using their official chat templates versus without them.** If you wish to reproduce results using the code in this repository for new LLMs, **make sure to apply the official chat template provided on the LLM’s Hugging Face page rather than the default chat template from this repository.** Otherwise, the experimental results may be inaccurate.
@@ -7,6 +30,11 @@ We have observed significant performance differences in recently released LLMs (
 
 
 
+
+
+
+
+-----
 
 **📢 News: this work has been accepted at the ACL 2024 main conference!**
 
