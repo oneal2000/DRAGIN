@@ -1,7 +1,6 @@
 # DRAGIN
 
 
-**📢 September 16, 2025 Update, Important:**
 
 
 
