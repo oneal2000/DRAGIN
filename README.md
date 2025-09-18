@@ -25,7 +25,7 @@ If the full corpus is not indexed, your reproduced results will be slightly lowe
 
 ------
 
-Additionally, we selected 1000 questions from each dataset. We have received some inquiries regarding this selection process. Specifically, we chose the top 1000 questions. Taking the top 1000 is as reasonable as randomly sampling 1000, and it offers more stability by avoiding the influence of random factors.
+Additionally, we selected 1000 questions from each dataset. We have received some inquiries regarding this selection process. **Specifically, we chose the top 1000 questions**. Taking the top 1000 is as reasonable as randomly sampling 1000, and it offers more stability by avoiding the influence of random factors.
 
 Furthermore, our method has been independently reproduced by others. 
 Several published papers have also independently reproduced our work, often applying DRAGIN to new datasets using the default hyperparameters without any adjustments. These include:
@@ -64,10 +64,6 @@ We have observed significant performance differences in recently released LLMs (
 
 
 
-**📢 News:**
-
-We would like to thank @Bocchi7 for reproducing our work with a simplified version of the code. You can check it out here:  
-[https://github.com/Bocchi7/DRAGIN_simplified](https://github.com/Bocchi7/DRAGIN_simplified)
 
 
 
