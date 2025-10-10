@@ -1,5 +1,5 @@
 {
-    "model_name_or_path": "meta-llama/Llama-2-13b-chat",
+    "model_name_or_path": "meta-llama/Llama-2-13b-chat-hf",
     "method": "dragin",
     "dataset": "2wikimultihopqa",
     "data_path": "../data/2wikimultihopqa",
@@ -13,7 +13,7 @@
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,
-    "hallucination_threshold": 0.9,
+    "hallucination_threshold": 0.8,
     "check_real_words": true,
     "use_counter": true
 }

@@ -6,4 +6,4 @@ scipy
 evaluate==0.2.2
 spacy==3.7.2
 accelerate
-elasticsearch==7.17.9
+elasticsearch==7.9.1
