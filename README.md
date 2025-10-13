@@ -2,6 +2,29 @@
 
 
 
+## 📢 October 13. 2025 Update:
+
+
+We have fixed several bugs in this version to improve usability and reproducibility:
+
+**Bug Fixes:**
+
+1. **Evaluation Script Renamed:** `evaluate.py` has been renamed to `eval.py`. In previous versions, users had to manually make this change to run the script.
+2. **Dependency Version Update:** The `elasticsearch` version in `requirements.txt` has been updated to `7.9.1` to resolve potential errors.
+3. **Model Version Update:** The `llama2-7b` and `llama2-13b` models have been switched to their Hugging Face (HF) versions. This change addresses potential errors and **reproducibility issues** found in the previous versions.
+
+------
+
+
+
+### ⚠️ **Important Notice on Reproducibility**
+
+To correctly reproduce the results reported in our paper, **in any case, under any circumstances, do not make any changes to the code!!!**
+
+For example, if you think you need to modify the code to run it on a Single GPU, **absolutely do not change it**. If you change it, the results will not be reproducible. You **must use two GPUs** and run the code without making any modifications.
+
+All experiments reported in our paper were conducted on multiple GPUs. Therefore, to reproduce the reported results, the program **must be run with exactly two GPUs**.
+
 
 
 ## **📢 September 16, 2025 Update:**
