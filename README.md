@@ -19,6 +19,12 @@ We have fixed several bugs in this version to improve usability and reproducibil
 
 ### ⚠️ **Important Notice on Reproducibility**
 
+We welcome the community to use DRAGIN as a foundation for new research. **Please feel free to modify and adapt the code for your projects. There are no licensing restrictions on any use.**
+
+**However, if your goal is to reproduce the results in the main experiment table of our paper, please do not make any modifications to the code!**
+
+This recommendation is based on our experience assisting users who initially faced issues with the reproducibility of our main experiment table, which were ultimately traced back to local code alterations.
+
 To correctly reproduce the results reported in our paper, **in any case, under any circumstances, do not make any changes to the code!!!**
 
 For example, if you think you need to modify the code to run it on a Single GPU, **absolutely do not change it**. If you change it, the results will not be reproducible. You **must use two GPUs** and run the code without making any modifications.
