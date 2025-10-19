@@ -1,6 +1,86 @@
 # DRAGIN
 
 
+## 📌 Important Notes on Reproducibility
+
+We are fully committed to helping you reproduce the results from our paper. We will respond to any email or issue regarding reproducibility to help you debug and replicate our main experimental findings.
+
+Through extensive experience in assisting users, we've identified a common and particularly challenging scenario: when reproduced results are only slightly lower than those reported in the paper (e.g., a 2-4 point difference). Tracing the source of such minor deviations can be difficult.
+
+**Based on our experience, if your results look different from ours, it's usually because of one of the four things listed below.** Each of these is a common issue that we've helped multiple users identify and fix:
+
+------
+
+
+### 1. Code Modifications (Especially for Single-GPU Setups)
+
+
+
+#### **!!! Please do not make any modifications to the code!!! **
+
+To correctly reproduce the results reported in our paper, you **must run the code as-is, without any alterations**.
+
+All experiments in our paper were conducted on a multi-GPU setup. Therefore, to replicate the reported results, the program **must be run with exactly two GPUs**. We have observed that modifications made to enable single-GPU execution will lead to results that do not align with our paper, even if the code runs without errors.
+
+
+
+### 2. Incomplete Elasticsearch Indexing
+
+To reproduce the full results, please ensure that the entire corpus is completely indexed in Elasticsearch.
+
+This process can be time-consuming (often taking several hours) and does not display a progress bar. It is highly susceptible to interruption. If the process is disrupted for any reason (e.g., network issues, system sleep), the resulting Elasticsearch index will be incomplete.
+
+An incomplete index leads to a subtle drop in performance. This can be difficult to detect, as the base model's performance without RAG is already strong, which can mask the impact of a partially indexed corpus.
+
+
+
+### 3. Using a Different Prompt Template
+
+
+
+The LLaMA-2 model is highly sensitive to the prompt template. Using a different template, even if it seems to convey the same meaning, can cause significant performance change. Please ensure you are using the exact prompt template provided in our codebase.
+
+
+
+### 4. Custom Evaluation Scripts or Dependency Issues
+
+
+
+**Problem:** We found that some users replaced our evaluation script with their own, often due to a dependency conflict with `beir==1.0.1` in our previous `requirements.txt`. This would lead to significant differences in the final results.
+
+**!!! This dependency issue was a bug in a previous version of our repository and has been fully resolved as of our October 13th update!!!**
+
+To ensure a clean setup and avoid any conflicts, we strongly recommend the following steps:
+
+1. **Delete or rename** your old local code directory to prevent file conflicts.
+2. Clone the latest version of this repository using `git clone`.
+3. Create a new virtual environment and install dependencies using the updated `requirements.txt` file from the new repository.
+
+
+
+### New Detailed Reproduction Guide!
+
+To further assist you, we have uploaded a comprehensive, step-by-step walkthrough to a new file:
+
+- **[detailed_reproducibility_guide.md](https://github.com/oneal2000/DRAGIN/tree/main/detailed_reproducibility_guide.md)**
+
+**This guide is significantly more detailed than a typical README. It provides command-by-command instructions and even includes the exact terminal output you should expect at each stage of a successful run.**
+
+
+
+### Still Having Trouble?
+
+The troubleshooting points listed above are a direct result of our email correspondence with the community. Each potential issue was identified after helping multiple researchers (more than three for each case) who were working to reproduce our results.
+
+This experience has made it clear to me that even when all code for baselines and methods is made public, subtle differences in hardware, software environments, and other local factors can still lead to slight variations in results. We understand this can be frustrating.
+
+**Therefore, if you have meticulously followed all the advice above and consulted our detailed guide but still encounter discrepancies, please do not hesitate to email us directly! We are more than happy to provide one-on-one guidance to help resolve the issue.**
+
+
+
+
+
+
 
 ## 📢 October 13. 2025 Update:
 
