@@ -97,7 +97,7 @@ We have fixed several bugs in this version to improve usability and reproducibil
 
 
 
-### ⚠️ **Important Notice on Reproducibility**
+### ⚠️ **October 13. 2025: Important Notice on Code Modification**
 
 We welcome the community to use DRAGIN as a foundation for new research. **Please feel free to modify and adapt the code for your projects. There are no licensing restrictions on any use.**
 
