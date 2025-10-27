@@ -223,7 +223,7 @@ rm elasticsearch-7.17.9.tar.gz
 cd elasticsearch-7.17.9
 nohup bin/elasticsearch &  # run Elasticsearch in background
 cd ../..
-python prep_elastic.py --data_path data/dpr/psgs_w100.tsv --index_name wiki  # build index
+python prep_elastic_with_tqdm.py --data_path data/dpr/psgs_w100.tsv --index_name wiki  # build index
 ```
 
 ### Download Dataset
