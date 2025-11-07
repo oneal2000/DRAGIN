@@ -1,6 +1,52 @@
 # DRAGIN
 
 
+## Nov 7, 2025 Update 📌 ATTENTION: A Critical Pinned Message for Reproduction
+
+We sincerely want you to have a smooth experience reproducing our work. Most issues users encounter stem from two primary sources. To save you time and **frustration**, we **strongly urge** you to read this *before* running inference.
+
+ 1.  **Code Modifications:** Please do not make any changes to the code, no matter how small.
+ 2.  **Incomplete Elasticsearch (ES) Index:** This is the most common and difficult-to-diagnose problem, which is detailed below.
+
+-----
+
+ ### ⚠️ **MANDATORY CHECK: Verify Your Elasticsearch Index**
+
+ After building the Wikipedia Index, and **before** you start the inference step, you **must** perform the following check to ensure the index is fully and correctly built.
+
+ #### Check the Index Status then Verify the Output
+
+ Run the following command in your terminal:
+
+ ```bash
+ curl -X GET "localhost:9200/_cat/indices?v"
+ ```
+
+
+
+A **correctly and completely built** index will look *exactly* like this. Pay close attention to the `docs.count` (\~21 million) and `store.size` (\~11.2GB):
+
+ ```
+ health status index uuid                  pri rep docs.count docs.deleted store.size pri.store.size dataset.size
+ yellow open   wiki  w3L9eKIMT4m8XZN39JGn5w   1   1   21015324            0     11.2gb         11.2gb         11.2gb
+ ```
+
+If your `docs.count` is in the thousands (e.g., 10,000) instead of 21 million, your index is **incomplete**, and your reproduction will fail.
+
+
+
+ ### The "Silent Failure" Warning
+
+This is the most critical part, and the source of most indexing failures:
+
+   * **ES Must Be Running:** Elasticsearch *must* remain running in the background at all times.
+   * **Disk Space is Key:** You must have **at least 10%** of your total disk space free *after* accounting for the 11.2GB index.
+   * **THE SILENT KILLER:** If your disk's free space drops too low (often below 10% or 5%), **Elasticsearch will automatically stop indexing**. It will do this **silently**, with **no errors and no logs** to indicate it has stopped.
+
+This silent failure is why many reproductions go wrong. You may *think* the index is built, but it only processed a tiny fraction of the 21 million articles.
+
+**Please, check your index and disk space carefully before proceeding!**
+
 ## 📌 Important Notes on Reproducibility
 
 We are fully committed to helping you reproduce the results from our paper. We will respond to any email or issue regarding reproducibility to help you debug and replicate our main experimental findings.
@@ -225,6 +271,41 @@ nohup bin/elasticsearch &  # run Elasticsearch in background
 cd ../..
 python prep_elastic.py --data_path data/dpr/psgs_w100.tsv --index_name wiki  # build index
 ```
+
+
+-----
+After building the Wikipedia Index, and **before** you start the inference step, you **must** perform the following check to ensure the index is fully and correctly built.
+
+ #### Check the Index Status then Verify the Output
+
+ Run the following command in your terminal:
+
+ ```bash
+curl -X GET "localhost:9200/_cat/indices?v"
+ ```
+
+
+
+A **correctly and completely built** index will look *exactly* like this. Pay close attention to the `docs.count` (\~21 million) and `store.size` (\~11.2GB):
+
+ ```
+health status index uuid                  pri rep docs.count docs.deleted store.size pri.store.size dataset.size
+yellow open   wiki  w3L9eKIMT4m8XZN39JGn5w   1   1   21015324            0     11.2gb         11.2gb         11.2gb
+ ```
+
+If your `docs.count` is in the thousands (e.g., 10,000) instead of 21 million, your index is **incomplete**, and your reproduction will fail.
+
+
+
+ ### The "Silent Failure" Warning
+
+This is the most critical part, and the source of most indexing failures:
+
+   * **ES Must Be Running:** Elasticsearch *must* remain running in the background at all times.
+   * **Disk Space is Key:** You must have **at least 10%** of your total disk space free *after* accounting for the 11.2GB index.
+   * **THE SILENT KILLER:** If your disk's free space drops too low (often below 10% or 5%), **Elasticsearch will automatically stop indexing**. It will do this **silently**, with **no errors and no logs** to indicate it has stopped.
+
+This silent failure is why many reproductions go wrong. You may *think* the index is built, but it only processed a tiny fraction of the 21 million articles.
 
 ### Download Dataset
 
