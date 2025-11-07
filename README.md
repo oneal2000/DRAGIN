@@ -1,7 +1,7 @@
 # DRAGIN
 
 
-## Nov 7, 2025 Update 📌 ATTENTION: A Critical Pinned Message for Reproduction
+## 📌 ATTENTION: A Critical Pinned Message for Reproduction
 
 We sincerely want you to have a smooth experience reproducing our work. Most issues users encounter stem from two primary sources. To save you time and **frustration**, we **strongly urge** you to read this *before* running inference.
 
